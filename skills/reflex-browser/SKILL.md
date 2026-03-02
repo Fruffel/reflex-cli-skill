@@ -23,11 +23,14 @@ The CLI is agent-only:
    - `npm install -g @reflexautomation/browser-cli`
 2. Start shell:
    - `reflex-browser`
-3. Only for persistent coding-agent workflows, use explicit session/profile when needed:
+3. Default behavior:
+   - Reuse the session returned by `shell_ready` / command responses.
+   - Do not set `--session` by default.
+4. Edge-case overrides only:
    - `reflex-browser --session ai-run --profile /tmp/reflex-profile`
-4. Wait for `shell_ready`.
-5. Send commands sequentially.
-6. End with `session_kill` for every session created by this flow.
+5. Wait for `shell_ready`.
+6. Send commands sequentially.
+7. End with `session_kill` for every session created by this flow.
 
 ## Shell Lifecycle (Required)
 
@@ -36,6 +39,13 @@ The CLI is agent-only:
 3. Do not reopen/restart the shell between normal steps.
 4. Reconnect only when transport/session errors occur.
 5. When done, run `session_kill` for created sessions, then `exit`.
+
+## Session Selection Rules
+
+1. Default: let Reflex Agent assign the session and reuse the returned session id.
+2. Do not pass `--session` unless you intentionally need a deterministic session name.
+3. Do not pass `session` in every command unless intentionally switching/targeting sessions.
+4. Treat `--session` the same as `--profile`: edge-case override, not default flow.
 
 ## Hard Rules
 
