@@ -34,11 +34,13 @@ The CLI is agent-only:
 
 ## Shell Lifecycle (Required)
 
-1. Start one long-running `reflex-browser` shell per task and keep it open.
+1. Start exactly one long-running `reflex-browser` shell per task and keep it open.
 2. Send all normal step-by-step commands through that same shell connection.
 3. Do not reopen/restart the shell between normal steps.
-4. Reconnect only when transport/session errors occur.
-5. When done, run `session_kill` for created sessions, then `exit`.
+4. Do not start additional shells for exploration, retries, or convenience.
+5. Start a second shell only if the original shell is unusable (transport disconnected, process crashed, or explicit user request).
+6. If a replacement shell is started, continue the task there and do not keep multiple active shells for the same task.
+7. When done, run `session_kill` for created sessions, then `exit`.
 
 ## Session Selection Rules
 
