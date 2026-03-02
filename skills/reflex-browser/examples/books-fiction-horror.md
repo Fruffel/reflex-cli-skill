@@ -1,4 +1,4 @@
-# Example: Fiction then Horror (Single Shell)
+# Example: Fiction then Horror (Stateless Commands)
 
 ## User Prompt
 
@@ -6,43 +6,41 @@
 
 ## Execution Rules Applied
 
-1. One long-running `reflex-browser` shell only.
-2. No extra shells for retries or parsing convenience.
-3. Sequential JSON commands.
-4. Reused server-assigned session id for the whole flow.
+1. One logical session id reused across commands.
+2. One command per process invocation.
+3. Sequential execution: inspect each JSON response before next step.
 
-## Commands Sent
+## Command Sequence
 
-```json
-{"id":"1","action":"open","arg1":"https://books.toscrape.com/index.html"}
-{"id":"2","action":"click","arg1":"a[href*='fiction_10']"}
-{"id":"3","action":"wait","arg1":"css=section > div > ol.row > li:nth-of-type(1) article.product_pod","arg2":"8000"}
-{"id":"4","action":"text","arg1":"css=section > div > ol.row > li:nth-of-type(1) h3 a"}
-{"id":"5","action":"text","arg1":"css=section > div > ol.row > li:nth-of-type(2) h3 a"}
-{"id":"6","action":"text","arg1":"css=section > div > ol.row > li:nth-of-type(3) h3 a"}
-{"id":"7","action":"text","arg1":"css=section > div > ol.row > li:nth-of-type(4) h3 a"}
-{"id":"8","action":"text","arg1":"css=section > div > ol.row > li:nth-of-type(1) .price_color"}
-{"id":"9","action":"text","arg1":"css=section > div > ol.row > li:nth-of-type(2) .price_color"}
-{"id":"10","action":"text","arg1":"css=section > div > ol.row > li:nth-of-type(3) .price_color"}
-{"id":"11","action":"text","arg1":"css=section > div > ol.row > li:nth-of-type(4) .price_color"}
-{"id":"12","action":"open","arg1":"https://books.toscrape.com/catalogue/category/books/horror_31/index.html"}
-{"id":"13","action":"wait","arg1":"css=section > div > ol.row > li:nth-of-type(1) article.product_pod","arg2":"8000"}
-{"id":"14","action":"text","arg1":"css=section > div > ol.row > li:nth-of-type(1) h3 a"}
-{"id":"15","action":"text","arg1":"css=section > div > ol.row > li:nth-of-type(2) h3 a"}
-{"id":"16","action":"text","arg1":"css=section > div > ol.row > li:nth-of-type(3) h3 a"}
-{"id":"17","action":"text","arg1":"css=section > div > ol.row > li:nth-of-type(4) h3 a"}
-{"id":"18","action":"text","arg1":"css=section > div > ol.row > li:nth-of-type(1) .price_color"}
-{"id":"19","action":"text","arg1":"css=section > div > ol.row > li:nth-of-type(2) .price_color"}
-{"id":"20","action":"text","arg1":"css=section > div > ol.row > li:nth-of-type(3) .price_color"}
-{"id":"21","action":"text","arg1":"css=section > div > ol.row > li:nth-of-type(4) .price_color"}
-{"id":"22","action":"session"}
-{"id":"23","action":"exit"}
+```bash
+reflex-browser start
+reflex-browser open "https://books.toscrape.com/index.html" --session <sessionId>
+reflex-browser click "a[href*='fiction_10']" --session <sessionId>
+reflex-browser wait "css=section > div > ol.row > li:nth-of-type(1) article.product_pod" 8000 --session <sessionId>
+reflex-browser text "css=section > div > ol.row > li:nth-of-type(1) h3 a" --session <sessionId>
+reflex-browser text "css=section > div > ol.row > li:nth-of-type(2) h3 a" --session <sessionId>
+reflex-browser text "css=section > div > ol.row > li:nth-of-type(3) h3 a" --session <sessionId>
+reflex-browser text "css=section > div > ol.row > li:nth-of-type(4) h3 a" --session <sessionId>
+reflex-browser text "css=section > div > ol.row > li:nth-of-type(1) .price_color" --session <sessionId>
+reflex-browser text "css=section > div > ol.row > li:nth-of-type(2) .price_color" --session <sessionId>
+reflex-browser text "css=section > div > ol.row > li:nth-of-type(3) .price_color" --session <sessionId>
+reflex-browser text "css=section > div > ol.row > li:nth-of-type(4) .price_color" --session <sessionId>
+reflex-browser open "https://books.toscrape.com/catalogue/category/books/horror_31/index.html" --session <sessionId>
+reflex-browser wait "css=section > div > ol.row > li:nth-of-type(1) article.product_pod" 8000 --session <sessionId>
+reflex-browser text "css=section > div > ol.row > li:nth-of-type(1) h3 a" --session <sessionId>
+reflex-browser text "css=section > div > ol.row > li:nth-of-type(2) h3 a" --session <sessionId>
+reflex-browser text "css=section > div > ol.row > li:nth-of-type(3) h3 a" --session <sessionId>
+reflex-browser text "css=section > div > ol.row > li:nth-of-type(4) h3 a" --session <sessionId>
+reflex-browser text "css=section > div > ol.row > li:nth-of-type(1) .price_color" --session <sessionId>
+reflex-browser text "css=section > div > ol.row > li:nth-of-type(2) .price_color" --session <sessionId>
+reflex-browser text "css=section > div > ol.row > li:nth-of-type(3) .price_color" --session <sessionId>
+reflex-browser text "css=section > div > ol.row > li:nth-of-type(4) .price_color" --session <sessionId>
+reflex-browser session-kill <sessionId> --session <sessionId>
 ```
 
 ## Observed Session
 
-- `shell_ready.session`: `session-b7f5170b`
-- `action:"session"` response: `Current session: session-b7f5170b`
+- Example run returned: `session-dcbe75da`
 
 ## Result Summary
 
@@ -59,9 +57,3 @@
 2. `Follow You Home` - `£21.36`
 3. `The Loney` - `£23.40`
 4. `Pet Sematary` - `£10.56`
-
-## Notes
-
-- This example intentionally keeps one shell session for the full task.
-- `click` was used for category navigation from home to Fiction.
-- Explicit `wait` was used only after category transitions.
