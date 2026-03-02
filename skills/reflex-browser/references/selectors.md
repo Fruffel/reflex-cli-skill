@@ -8,13 +8,15 @@ Generate selectors that are stable enough for automation and clear enough for re
 
 1. Inspect page state:
    - run `summary` first.
-2. Ask selector helper:
+2. Guard page identity before selectors:
+   - run `url` and verify expected page context.
+3. Ask selector helper:
    - run `selector_helper` with intent text.
-3. Validate without mutation:
+4. Validate without mutation:
    - run `visible` or `wait` with candidate selector.
-4. Perform action:
+5. Perform action:
    - use `click`, `fill`, `type`, etc.
-5. Re-evaluate after DOM/navigation change:
+6. Re-evaluate after DOM/navigation change:
    - rerun `summary` and `selector_helper`.
 
 ## Preferred Selector Order
@@ -42,6 +44,7 @@ Generate selectors that are stable enough for automation and clear enough for re
 On selector failure:
 
 1. capture `summary`
-2. run `selector_helper` with refined intent
-3. probe candidate with `visible`/`wait`
-4. retry action
+2. re-check with `url`
+3. run `selector_helper` with refined intent
+4. probe candidate with `visible`/`wait`
+5. retry action

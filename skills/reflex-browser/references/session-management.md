@@ -45,6 +45,13 @@ For transport failures:
 For action failures with stale DOM:
 
 1. re-check `url` and `title`
-2. run `summary`
-3. rerun `selector-helper`
-4. retry action with updated selector
+2. verify expected page context before selector actions
+3. run `summary`
+4. rerun `selector-helper`
+5. retry action with updated selector
+
+For looped detail-page traversal:
+
+1. collect `href` values from listing page
+2. use `open <href>` directly (CLI auto-resolves relative URLs against current session URL)
+3. re-check `url` after each `open` before reading detail selectors

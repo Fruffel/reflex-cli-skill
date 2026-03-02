@@ -38,6 +38,20 @@ reflex-browser text "css=section > div > ol.row > li:nth-of-type(4) .price_color
 reflex-browser session-kill <sessionId> --session <sessionId>
 ```
 
+## Safe Link Traversal Pattern (When Opening Book Detail Pages)
+
+Use this pattern to avoid malformed relative links and wrong-page selector runs:
+
+```bash
+reflex-browser url --session <sessionId>
+# assume response.data.url is listingUrl
+reflex-browser attribute "css=ol.row > li:nth-of-type(1) h3 a" "href" --session <sessionId>
+# assume response.data.value is linkHref
+reflex-browser open "<linkHref>" --session <sessionId>
+# CLI resolves relative hrefs against listingUrl automatically
+reflex-browser text "css=article.product_page h1" --session <sessionId>
+```
+
 ## Observed Session
 
 - Example run returned: `session-dcbe75da`

@@ -76,3 +76,8 @@ Bootstrap/open flags (only on `start`, `new`, `restart`, `open`):
 - `--height <px>`
 - `--headless <true|false>`
 - `--open-wait <domcontentloaded|load|networkidle>`
+
+`open` URL handling:
+
+- absolute URL input is used directly
+- relative URL input is automatically resolved against current session URL

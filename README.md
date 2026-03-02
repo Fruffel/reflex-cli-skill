@@ -68,6 +68,19 @@ Open a URL in an existing session:
 reflex-browser open https://example.com --session my-session
 ```
 
+Fail fast if page context is wrong:
+
+```bash
+reflex-browser url --session my-session
+# stop if URL is not what you expect before running selector commands
+```
+
+Open a relative URL safely (resolved against current session URL):
+
+```bash
+reflex-browser open "../../../a-book_1/index.html" --session my-session
+```
+
 Fill an input:
 
 ```bash

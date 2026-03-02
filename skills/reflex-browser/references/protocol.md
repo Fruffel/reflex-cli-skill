@@ -3,7 +3,7 @@
 ## Transport Model
 
 - Invocation: `reflex-browser <command> [args] [flags]`
-- Each process sends exactly one backend action.
+- Most commands send exactly one backend action.
 - Output: exactly one JSON object on stdout.
 - Exit code: `0` on success, `1` on failure.
 
@@ -40,6 +40,10 @@ CLI builds one backend payload with:
 
 `wait`, `visible`, `enabled`, and `selected` optional timeout positional arg maps to command timeout override, not `arg2`.
 
+Smart preflight behavior:
+
+- if `open` receives a relative URL, CLI requests current URL and resolves `arg1` before sending `open`
+
 ## Output Envelope
 
 All command responses follow:
@@ -50,6 +54,8 @@ All command responses follow:
 - `timingMs`
 - `response` (raw backend response)
 - `message` (error details)
+
+Use `url` explicitly to verify page context before selector-heavy sequences.
 
 ## Screenshot Response
 

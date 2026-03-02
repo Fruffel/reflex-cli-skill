@@ -48,6 +48,8 @@ The CLI is single-action per process:
 1. Bridge is Chrome-only.
 2. Do **not** send `options.browser`.
 3. Recompute selectors after DOM changes (`summary` + `selector-helper`).
+4. Stop on first failed command (`ok: false`) to avoid cascading selector errors.
+5. Pass relative links directly to `open`; CLI resolves them against current session URL.
 
 ## Wait Strategy (Required)
 
@@ -64,6 +66,7 @@ The CLI is single-action per process:
 1. Running commands without checking each JSON response.
 2. Using `eval` as default extraction when `text`, `summary`, `attribute`, or `property` can answer the task.
 3. Running long blind command chains without validating page state.
+4. Continuing extraction loops after a failed `open` or URL preflight validation.
 
 ## References
 
