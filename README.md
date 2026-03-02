@@ -86,5 +86,5 @@ npm run build
 
 ## Docs for Agent Integrations
 
-- `skills/reflex-browser-cli/SKILL.md`
-- `skills/reflex-browser-cli/references/`
+- `skills/reflex-browser/SKILL.md`
+- `skills/reflex-browser/references/`

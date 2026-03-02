@@ -1,9 +1,9 @@
 ---
-name: reflex-browser-cli
+name: reflex-browser
 description: Use this skill for browser automation through Reflex Agent using the reflex-browser CLI, including session handling, command flow, selectors, and protocol-safe request patterns.
 ---
 
-# Reflex Browser CLI Skill (Agent-Only)
+# Reflex Browser Skill (Agent-Only)
 
 ## Purpose
 
