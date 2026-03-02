@@ -57,6 +57,10 @@ All command responses follow:
 
 Use `url` explicitly to verify page context before selector-heavy sequences.
 
+Read command value contract:
+
+- for `text`, `value`, `attribute`, `property`, `tag`, `title`, and `url`, the CLI normalizes extracted output to `response.data.value`
+
 ## Screenshot Response
 
 For `screenshot`:

@@ -66,7 +66,43 @@ The CLI is single-action per process:
 1. Running commands without checking each JSON response.
 2. Using `eval` as default extraction when `text`, `summary`, `attribute`, or `property` can answer the task.
 3. Running long blind command chains without validating page state.
-4. Continuing extraction loops after a failed `open` or URL preflight validation.
+4. Continuing extraction loops after a failed `open`.
+
+## Bash URL Handling (Optional)
+
+Use this only when writing shell wrappers around CLI JSON output.
+For normal CLI usage, prefer `open <href>` directly (relative URLs are auto-resolved).
+
+```bash
+get_value() { jq -r '.response.data.value // empty'; }
+get_url() { reflex-browser url --session "$S" | get_value; }
+open_target() {
+  local href="$1"
+  reflex-browser open "$href" --session "$S" >/dev/null
+  get_url
+}
+```
+
+## PowerShell URL Handling (Optional)
+
+Use the same pattern in PowerShell when running on Windows.
+
+```powershell
+function Get-Value {
+  param([Parameter(ValueFromPipeline = $true)] $obj)
+  process { $obj.response.data.value }
+}
+
+function Get-Url {
+  reflex-browser url --session $env:S | ConvertFrom-Json | Get-Value
+}
+
+function Open-Target {
+  param([string]$Href)
+  reflex-browser open $Href --session $env:S | Out-Null
+  Get-Url
+}
+```
 
 ## References
 

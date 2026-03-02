@@ -48,6 +48,10 @@
 - `enabled <selector> [timeoutMs]`
 - `selected <selector> [timeoutMs]`
 
+Read output note:
+
+- prefer `response.data.value` for extracted values (`text`, `value`, `attribute`, `property`, `tag`, `title`, `url`)
+
 ## Analysis/Debug
 
 - `summary [maxItems]`

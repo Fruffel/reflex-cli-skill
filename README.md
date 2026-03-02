@@ -104,6 +104,8 @@ All commands print one JSON object:
 - `response` (raw backend response)
 - `message` (error detail on failure)
 
+For read-style actions (`text`, `attribute`, `property`, `value`, `tag`, `title`, `url`), use `response.data.value` as the extracted value.
+
 ## Configuration
 
 Config precedence:
