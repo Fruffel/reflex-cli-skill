@@ -1,67 +1,59 @@
-# Protocol Reference (JSONL)
+# Protocol Reference (Stateless CLI)
 
 ## Transport Model
 
-- Input: one JSON object per line on stdin.
-- Output: one JSON object per line on stdout.
-- Startup emits a readiness line (`shell_ready`) after auto-bootstrap `start`.
-- Recommended execution mode: interactive step-by-step (`send -> read response -> decide next`) rather than large pre-queued batches.
+- Invocation: `reflex-browser <command> [args] [flags]`
+- Each process sends exactly one backend action.
+- Output: exactly one JSON object on stdout.
+- Exit code: `0` on success, `1` on failure.
 
-Queue behavior:
+## Command Contract
 
-- Interactive (`stdin` is TTY): emits `{"ok":true,"action":"waiting_response",...}` while a command is in-flight.
-- Non-interactive (piped/redirected input): additional in-flight commands are rejected with `{"ok":false,"action":"queue",...}`.
+Global flags:
 
-## Input Payload
+- `--config <path>`
+- `--profile <path>`
+- `--timeout <ms>`
 
-Top-level fields:
+Session contract:
 
-- `id`: optional request id
-- `action`: required command name
-- `arg1`, `arg2`: optional command args
-- `session`: optional session override
-- `profile`: optional profile override
-- `timeoutMs`: optional timeout override
-- `options`: optional bootstrap/open options
-  - `width`
-  - `height`
-  - `headless`
-  - `openWait` (`domcontentloaded|load|networkidle`)
+- `start`: `--session <id>` optional
+- all other action commands: `--session <id>` required
 
-Important:
+Bootstrap/open options (`start`, `new`, `restart`, `open` only):
 
-- Do not send `options.browser`.
-- Bridge sessions are Chrome-only.
+- `--width <px>`
+- `--height <px>`
+- `--headless <true|false>`
+- `--open-wait <domcontentloaded|load|networkidle>`
+
+## Backend Payload Mapping
+
+CLI builds one backend payload with:
+
+- `action`
+- `arg1`
+- `arg2`
+- `session`
+- `profile`
+- `options` (only for bootstrap/open commands)
+
+`wait`, `visible`, `enabled`, and `selected` optional timeout positional arg maps to command timeout override, not `arg2`.
 
 ## Output Envelope
 
-Shell lines:
+All command responses follow:
 
-- readiness:
-  - `{"ok":true,"action":"shell_ready",...}`
-- per command:
-  - `{"ok":true|false,"id":"...","action":"...","timingMs":...,"response":{...}}`
-
-`response` typically contains:
-
-- `success`: backend result status
-- `message`: result/error summary
-- optional `data`: page/context metadata
-- optional `errorCode`, `recoveryHint` on failures
-
-## Example Flow
-
-```json
-{"id":"1","action":"open","arg1":"https://example.com"}
-{"id":"2","action":"summary","arg1":"20"}
-{"id":"3","action":"selector_helper","arg1":"login button","arg2":"10"}
-{"id":"4","action":"click","arg1":"css=button[type='submit']"}
-{"id":"5","action":"wait","arg1":"css=.dashboard","arg2":"10000"}
-```
+- `ok`
+- `action`
+- `session` (effective session when known)
+- `timingMs`
+- `response` (raw backend response)
+- `message` (error details)
 
 ## Screenshot Response
 
-For `action: "screenshot"`:
+For `screenshot`:
 
 - `response.data.imageBase64`: base64 PNG
 - `response.data.mimeType`: `image/png`

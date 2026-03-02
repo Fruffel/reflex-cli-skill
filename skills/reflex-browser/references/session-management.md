@@ -2,68 +2,49 @@
 
 ## Core Principles
 
-1. Use one session per automation flow.
-2. Reuse the same session while context is stable.
-3. Use `new`/`restart` when state becomes ambiguous.
-4. End sessions explicitly with `session_kill`.
-5. Prefer agent-assigned sessions by default.
+1. Use one session id per automation flow.
+2. Start once, then pass the same `--session` for each follow-up command.
+3. Use `new` or `restart` when state is ambiguous.
+4. End sessions explicitly with `session-kill`.
 
-## CLI Flags and Session Overrides
+## Stateless Workflow
 
-- `--session <name>`:
-  - Sets the session for this CLI shell run only.
-  - Use this only for edge cases where deterministic session naming is explicitly required.
-  - This value is intentionally not read from config files or environment variables.
+1. Run `reflex-browser start`.
+2. Read returned JSON and capture `session`.
+3. Run subsequent commands with `--session <sessionId>`.
+4. Run `session-kill <targetSession> --session <sessionId>` when complete.
+
+## Session and Profile Options
+
+- `--session <id>`:
+  - optional on `start`
+  - required on all other commands
+  - use explicit values only when deterministic naming is needed
 
 - `--profile <path>`:
-  - Sets a persistent browser profile directory (cookies, local storage, other browser state).
-  - Use this only when persistent browser state is intentionally required.
-  - If omitted, no explicit persistent profile is forced by the CLI.
-
-- `session` (per-command payload field):
-  - Use this only when a coding agent intentionally needs to target or switch to a specific existing session.
-  - If omitted, the agent controls session assignment for the shell flow.
-
-- Recommended default for normal use:
-  - Start with `reflex-browser`.
-  - Reuse the session returned from `shell_ready`/responses.
-  - Do not pass `--session` unless explicitly needed.
-  - Do not pass `--profile` unless persistence is required.
-
-## Bootstrap and Reuse
-
-- Shell startup auto-sends `start`.
-- `open` also auto-starts session when missing.
-- Use `session_list` to inspect existing sessions before reuse.
+  - enables persistent browser profile state
+  - use only when persistent cookies/local storage are intentionally required
 
 ## Lifecycle Commands
 
-- `start`: start if absent
-- `new` / `restart`: force clean session
-- `session_kill arg1=<session>`: terminate one session
-
-Global stale sessions are cleaned by the agent background cleanup job.
+- `start`: start if absent / reuse active
+- `new`: force a fresh session context
+- `restart`: restart session context
+- `session-list`: inspect active sessions
+- `session-kill <targetSession>`: terminate one named session
 
 ## Failure Recovery
 
-For transport/protocol failures:
+For transport failures:
 
-1. reconnect shell
-2. run `status`
-3. run `session_list`
-4. either continue with valid session or run `new`
+1. rerun the same command (each invocation reconnects)
+2. run `status --session <sessionId>`
+3. run `session-list --session <sessionId>`
+4. continue or reset with `new --session <sessionId>`
 
-For action failures with stale/changed DOM:
+For action failures with stale DOM:
 
-1. re-check `url`/`title`
+1. re-check `url` and `title`
 2. run `summary`
-3. rerun `selector_helper`
+3. rerun `selector-helper`
 4. retry action with updated selector
-5. if retry still fails, use one explicit `wait` on a stable marker and retry once
-
-## Hygiene Checklist
-
-- Do not leave long-lived orphan sessions.
-- Kill sessions when flow is complete.
-- Prefer deterministic session names for multi-step workflows.
-- Use `profile` only when persistence is intentionally required.

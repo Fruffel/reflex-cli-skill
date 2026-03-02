@@ -7,13 +7,13 @@ description: Use this skill for browser automation through Reflex Agent using th
 
 ## Purpose
 
-Use this skill when you need browser automation through Reflex Agent via the JSONL shell protocol.
+Use this skill when you need browser automation through Reflex Agent via stateless CLI commands.
 
-The CLI is agent-only:
+The CLI is single-action per process:
 
-- start one long-running shell process
-- send one JSON object per line on stdin
-- read one JSON object per line on stdout
+- run one `reflex-browser <command>` invocation
+- pass `--session` on all non-`start` actions
+- read one JSON response from stdout
 
 ## Quick Start
 
@@ -21,75 +21,59 @@ The CLI is agent-only:
    - `npm config set @reflexautomation:registry "https://git.bqa-solutions.nl/api/packages/reflex/npm/" --location=user`
    - `npm config set "//git.bqa-solutions.nl/api/packages/reflex/npm/:_authToken" "YOUR_DEPLOY_TOKEN" --location=user`
    - `npm install -g @reflexautomation/browser-cli`
-2. Start shell:
-   - `reflex-browser`
-3. Default behavior:
-   - Reuse the session returned by `shell_ready` / command responses.
-   - Do not set `--session` by default.
-4. Edge-case overrides only:
-   - `reflex-browser --session ai-run --profile /tmp/reflex-profile`
-5. Wait for `shell_ready`.
-6. Send commands sequentially.
-7. End with `session_kill` for every session created by this flow.
+2. Start or reuse a session:
+   - `reflex-browser start`
+3. Capture returned `session` from JSON response.
+4. Reuse that session id on each next command:
+   - `reflex-browser open https://example.com --session <sessionId>`
+5. End with `session-kill <targetSession> --session <sessionId>` for sessions created by this flow.
 
-## Shell Lifecycle (Required)
+## Command Lifecycle (Required)
 
-1. Start exactly one long-running `reflex-browser` shell per task and keep it open.
-2. Send all normal step-by-step commands through that same shell connection.
-3. Do not reopen/restart the shell between normal steps.
-4. Do not start additional shells for exploration, retries, or convenience.
-5. Start a second shell only if the original shell is unusable (transport disconnected, process crashed, or explicit user request).
-6. If a replacement shell is started, continue the task there and do not keep multiple active shells for the same task.
-7. When done, run `session_kill` for created sessions, then `exit`.
-8. Execute commands interactively: send one action, inspect response, then send the next action.
+1. Send actions as separate CLI invocations.
+2. Keep one logical session id for the task.
+3. Do not omit `--session` on non-`start` commands.
+4. Execute sequentially: run one command, inspect response, then run the next.
+5. On transport failure, rerun the command as a new invocation.
+6. Cleanup with `session-kill` when done.
 
 ## Session Selection Rules
 
-1. Default: let Reflex Agent assign the session and reuse the returned session id.
-2. Do not pass `--session` unless you intentionally need a deterministic session name.
-3. Do not pass `session` in every command unless intentionally switching/targeting sessions.
-4. Treat `--session` the same as `--profile`: edge-case override, not default flow.
+1. Default: run `start` without `--session` and reuse returned session id.
+2. Use `start --session <id>` only when deterministic naming is required.
+3. Pass `--profile` only when persistent browser state is intentionally needed.
 
 ## Hard Rules
 
 1. Bridge is Chrome-only.
 2. Do **not** send `options.browser`.
-3. Default to one shell process and one sequential command stream.
-4. Recompute selectors after DOM changes (`summary` + `selector_helper`).
+3. Recompute selectors after DOM changes (`summary` + `selector-helper`).
 
 ## Wait Strategy (Required)
 
-1. `click`, `fill`, `type`, and `open` already include built-in waiting behavior. Do not add redundant `wait` before every interaction.
-2. Use explicit `wait` only for real state transitions:
+1. `click`, `fill`, `type`, and `open` include waiting behavior; avoid redundant waits.
+2. Use explicit `wait` for real state transitions:
    - after navigation
    - after `back` / `forward` / `refresh`
-   - after actions that trigger async UI updates
-3. Prefer waiting on stable page-level targets (container, heading, route-specific marker), not fragile `nth-child` selectors.
-4. If an action fails once, rerun it once. If it fails again, run `summary` + `selector_helper` and continue with updated selectors.
-5. Avoid long wait chains; keep waits minimal and intentional.
-
-## Runtime Queue Behavior
-
-1. Interactive terminal mode: CLI emits `action: "waiting_response"` and pauses input while a command is in flight.
-2. Non-interactive/piped mode: queueing is rejected with `action: "queue"`.
-3. Always follow `send one action -> wait for response -> send next action`.
+   - after async UI updates
+3. Prefer stable page-level wait targets over fragile positional selectors.
+4. If an action fails once, retry once. If it fails again, run `summary` + `selector-helper` and continue with updated selectors.
 
 ## Anti-Patterns (Forbidden)
 
-1. Starting new shells for retries while the current shell is still healthy.
-2. Piping live shell output through `grep`/`tail` during active command flows.
-3. Using `eval` as the default data extraction path when `text`, `summary`, `attribute`, or `property` can answer the task.
-4. Sending long pre-queued command batches (heredoc/large JSONL blocks) without checking each response in between.
+1. Running commands without checking each JSON response.
+2. Using `eval` as default extraction when `text`, `summary`, `attribute`, or `property` can answer the task.
+3. Running long blind command chains without validating page state.
 
 ## References
 
-- Worked examples and transcripts:
+- Worked examples:
   - `examples/books-fiction-horror.md`
-- Command catalog and argument semantics:
+- Command catalog and flags:
   - `references/commands.md`
-- Protocol, payload schema, and response shape:
+- CLI protocol contract:
   - `references/protocol.md`
-- Selector generation and stabilization workflow:
+- Selector workflow:
   - `references/selectors.md`
-- Session lifecycle and recovery strategy:
+- Session lifecycle and recovery:
   - `references/session-management.md`

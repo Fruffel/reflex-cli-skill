@@ -1,53 +1,106 @@
 # Reflex Browser CLI
 
-`@reflexautomation/browser-cli` is the CLI for running and controlling browser sessions through Reflex Agent.
+`@reflexautomation/browser-cli` runs Reflex Agent browser actions as stateless CLI commands.
 
-Use it from your terminal or coding-agent workflows to open pages, interact with sites, and manage browser sessions.
+Each invocation:
+
+1. connects to the agent
+2. sends exactly one backend action
+3. prints exactly one JSON object to stdout
+4. exits (`0` on success, `1` on failure)
 
 ## Install (Global CLI)
 
-Configure your user npm scope once:
+Configure npm scope:
 
 ```bash
 npm config set @reflexautomation:registry "https://git.bqa-solutions.nl/api/packages/reflex/npm/" --location=user
 npm config set "//git.bqa-solutions.nl/api/packages/reflex/npm/:_authToken" "YOUR_DEPLOY_TOKEN" --location=user
 ```
 
-Install globally:
+Install:
 
 ```bash
 npm install -g @reflexautomation/browser-cli
 ```
 
-## Use
-
-Start shell:
+## Command Model
 
 ```bash
-reflex-browser
+reflex-browser <command> [args] [flags]
 ```
 
-Quick test:
+Global flags (available on every command):
+
+- `--config <path>`
+- `--profile <path>`
+- `--timeout <ms>`
+
+Session flag:
+
+- `start`: `--session <id>` optional
+- all other commands: `--session <id>` required
+
+Bootstrap/open flags (supported only by `start`, `new`, `restart`, `open`):
+
+- `--width <px>`
+- `--height <px>`
+- `--headless <true|false>`
+- `--open-wait <domcontentloaded|load|networkidle>`
+
+## Examples
+
+Start a session (agent assigns session id):
 
 ```bash
-printf '{"id":"1","action":"status"}\n{"id":"2","action":"exit"}\n' | reflex-browser
+reflex-browser start
 ```
 
-Optional persistence flag:
+Start with explicit session id:
 
 ```bash
-reflex-browser --session my-agent --profile /tmp/reflex-profile --timeout 15000
+reflex-browser start --session my-session
 ```
+
+Open a URL in an existing session:
+
+```bash
+reflex-browser open https://example.com --session my-session
+```
+
+Fill an input:
+
+```bash
+reflex-browser fill "css=input[name='email']" "user@example.com" --session my-session
+```
+
+Wait with custom timeout:
+
+```bash
+reflex-browser wait "css=.dashboard" 8000 --session my-session
+```
+
+## JSON Output Envelope
+
+All commands print one JSON object:
+
+- `ok`
+- `action`
+- `session` (if known)
+- `timingMs`
+- `response` (raw backend response)
+- `message` (error detail on failure)
 
 ## Configuration
 
 Config precedence:
 
-1. CLI flags (`--session`, `--profile`, `--timeout`, `--config`)
+1. CLI flags (`--config`, `--profile`, `--timeout`, command-specific options)
 2. Environment variables
-3. Project config discovered by `cosmiconfig` (for example `.reflex-browser.json`)
-4. Global config:
-   - Windows: `%APPDATA%\reflex-browser\config.{json,yaml,yml}`
+3. Current working directory config (`.reflex-browser/config.{json,yaml,yml}`)
+4. Project config discovered by `cosmiconfig` (for example `.reflex-browser.json`)
+5. Global config:
+   - Windows: `%APPDATA%\\reflex-browser\\config.{json,yaml,yml}`
    - Linux/macOS: `$XDG_CONFIG_HOME/reflex-browser/config.{json,yaml,yml}` or `~/.config/reflex-browser/config.{json,yaml,yml}`
 
 Environment variables:
@@ -63,28 +116,15 @@ Environment variables:
 
 ## Development
 
-Prerequisites:
-
-- `mise` (uses `.mise.toml`)
-- `npm`
-
-Setup and run locally:
-
 ```bash
 mise install
 npm ci
+npm run validate
 npm run build
-node dist/index.js
+npm test
 ```
 
-Before committing changes:
-
-```bash
-npm run fix
-npm run build
-```
-
-## Docs for Agent Integrations
+## Agent Integration Docs
 
 - `skills/reflex-browser/SKILL.md`
 - `skills/reflex-browser/references/`

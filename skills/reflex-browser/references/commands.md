@@ -1,101 +1,78 @@
 # Command Reference
 
-## Session/System Commands
+## Session/System
 
 - `status`
-  - Returns bridge health and session count.
 - `start`
-  - Starts a session if missing; reuses existing active session.
-- `new` / `restart`
-  - Force new session, closing previous session state.
+- `new`
+- `restart`
 - `session`
-  - Reports the current session name.
-- `session_current`
-  - Alias of `session`.
-- `session_list`
-  - Lists active sessions and metadata.
-- `session_kill`
-  - `arg1=<session>`
-  - Kills one named session.
+- `session-current` -> backend action `session_current`
+- `session-list` -> backend action `session_list`
+- `session-kill <targetSession>` -> backend action `session_kill`
 
-## Navigation and Page Commands
+## Navigation/Page
 
-- `open`
-  - `arg1=<url>`
-  - Starts session if needed, navigates, applies open wait strategy.
+- `open <url>`
 - `url`
-  - Returns current page URL.
 - `title`
-  - Returns current page title.
-- `html` / `source`
-  - Returns current page source.
-- `back`, `forward`, `refresh`
-  - Browser navigation controls.
-- `eval`
-  - `arg1=<javascript>`
-  - Executes JavaScript in current page context.
+- `html` (alias: `source`)
+- `back`
+- `forward`
+- `refresh`
+- `eval <javascript>`
 
-## Tab Commands
+## Tabs
 
-- `switch_next_tab`
-- `switch_prev_tab`
-- `close_tab`
+- `switch-next-tab` -> `switch_next_tab`
+- `switch-prev-tab` -> `switch_prev_tab`
+- `close-tab` -> `close_tab`
 
-## Element Interaction Commands
+## Interactions
 
-- `click`
-  - `arg1=<selector>`
-- `fill`
-  - `arg1=<selector>`, `arg2=<text>`
-  - Clears then types.
-- `type`
-  - `arg1=<selector>`, `arg2=<text>`
-  - Types without clear.
-- `enter`
-  - `arg1=<selector>`
-- `tab`
-  - `arg1=<selector>`
+- `click <selector>`
+- `fill <selector> <text>`
+- `type <selector> <text>`
+- `enter <selector>`
+- `tab <selector>`
 
-## Element Read/Validation Commands
+## Reads/Validation
 
-- `text` / `gettext`
-  - `arg1=<selector>`
-- `value` / `getvalue`
-  - `arg1=<selector>`
-- `attribute`
-  - `arg1=<selector>`, `arg2=<attributeName>`
-- `property`
-  - `arg1=<selector>`, `arg2=<propertyName>`
-- `tag`
-  - `arg1=<selector>`
-- `wait`
-  - `arg1=<selector>`, optional `arg2=<timeoutMs>`
-- `visible`
-  - `arg1=<selector>`, optional `arg2=<timeoutMs>`
-- `enabled`
-  - `arg1=<selector>`, optional `arg2=<timeoutMs>`
-- `selected`
-  - `arg1=<selector>`, optional `arg2=<timeoutMs>`
+- `text <selector>` (alias: `gettext`)
+- `value <selector>` (alias: `getvalue`)
+- `attribute <selector> <attributeName>`
+- `property <selector> <propertyName>`
+- `tag <selector>`
+- `wait <selector> [timeoutMs]`
+- `visible <selector> [timeoutMs]`
+- `enabled <selector> [timeoutMs]`
+- `selected <selector> [timeoutMs]`
 
-## Analysis/Debug Commands
+## Analysis/Debug
 
-- `summary`
-  - optional `arg1=<maxItems>`, default `20`
-- `selector_helper` / `selector-helper` / `discover_selectors`
-  - `arg1=<intent query>`, optional `arg2=<maxItems>`
+- `summary [maxItems]`
+- `selector-helper <intentQuery> [maxItems]`
+  - aliases: `selector_helper`, `discover_selectors`
 - `selectors`
-  - Returns discovered selector history.
-- `lua` / `generate`
-  - Emits generated Lua script from recorded actions.
+- `lua` (alias: `generate`)
 - `screenshot`
-  - Returns in-memory PNG (`response.data.imageBase64`).
 
-## Notes
+## Flags
 
-1. Commands are session-scoped; keep one session per flow.
-2. Run dependent commands sequentially.
-3. `open`, `start`, `new`, `restart` consume `options` (`width`, `height`, `headless`, `openWait`).
-4. `options.browser` is not supported.
-5. `stop` is removed; use `session_kill` for explicit cleanup.
-6. `click`/`fill`/`type` generally do not need a separate pre-`wait` when selector quality is good.
-7. Add explicit `wait` after route/state transitions (`open`, `back`, `forward`, `refresh`) or async UI updates.
+Global flags for all commands:
+
+- `--config <path>`
+- `--profile <path>`
+- `--timeout <ms>`
+
+Session flag rule:
+
+- `start`: `--session <id>` optional
+- all other commands: `--session <id>` required
+
+Bootstrap/open flags (only on `start`, `new`, `restart`, `open`):
+
+- `--width <px>`
+- `--height <px>`
+- `--headless <true|false>`
+- `--open-wait <domcontentloaded|load|networkidle>`
