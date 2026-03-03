@@ -93,6 +93,14 @@ Wait with custom timeout:
 reflex-browser wait "css=.dashboard" 8000 --session my-session
 ```
 
+Get ranked locator hints for an intent:
+
+```bash
+reflex-browser summary 25 --intent "click login button" --session my-session
+```
+
+Prefer summary hints first and fetch `html` only as a last resort when all high/medium-confidence candidates are weak or fail validation.
+
 ## JSON Output Envelope
 
 All commands print one JSON object:

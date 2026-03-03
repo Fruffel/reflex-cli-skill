@@ -46,9 +46,9 @@ For action failures with stale DOM:
 
 1. re-check `url` and `title`
 2. verify expected page context before selector actions
-3. run `summary`
-4. rerun `selector-helper`
-5. retry action with updated selector
+3. run `summary --intent "<intent>"`
+4. retry action with updated high-confidence selector hint
+5. request `html` only if hints remain weak after retries
 
 For looped detail-page traversal:
 

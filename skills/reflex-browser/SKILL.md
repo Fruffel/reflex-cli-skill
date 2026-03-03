@@ -47,7 +47,7 @@ The CLI is single-action per process:
 
 1. Bridge is Chrome-only.
 2. Do **not** send `options.browser`.
-3. Recompute selectors after DOM changes (`summary` + `selector-helper`).
+3. Recompute selectors after DOM changes (`summary --intent`).
 4. Stop on first failed command (`ok: false`) to avoid cascading selector errors.
 5. Pass relative links directly to `open`; CLI resolves them against current session URL.
 6. For repeated-item extraction, anchor selectors at the collection parent (for example list/grid item), then index that parent; do not index unrelated descendants.
@@ -61,7 +61,7 @@ The CLI is single-action per process:
    - after `back` / `forward` / `refresh`
    - after async UI updates
 3. Prefer stable page-level wait targets over fragile positional selectors.
-4. If an action fails once, retry once. If it fails again, run `summary` + `selector-helper` and continue with updated selectors.
+4. If an action fails once, retry once. If it fails again, run `summary --intent` and continue with updated selectors.
 5. After 2 consecutive failures for the same intent, stop the loop and run recovery; never keep incrementing positional selectors blindly.
 6. For `wait`/`visible`/`enabled`/`selected`, pass per-check timeout as the positional argument (`wait "<selector>" 8000`); reserve global `--timeout` for transport/command envelope timeout.
 
@@ -73,7 +73,7 @@ The CLI is single-action per process:
 4. Continuing extraction loops after a failed `open`.
 5. Using positional selectors on the wrong structural level (for example `article:nth-of-type(n)` when siblings are actually `li` elements).
 6. Repeating the same failing selector pattern across increasing indexes without re-discovery.
-7. Jumping to full `html` dumps before trying `summary` + `selector-helper` for selector recovery.
+7. Jumping to full `html` dumps before trying `summary --intent` for selector recovery.
 
 ## Repeated Items Pattern (Required)
 

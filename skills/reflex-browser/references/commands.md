@@ -54,9 +54,7 @@ Read output note:
 
 ## Analysis/Debug
 
-- `summary [maxItems]`
-- `selector-helper <intentQuery> [maxItems]`
-  - aliases: `selector_helper`, `discover_selectors`
+- `summary [maxItems] [--intent <query>]`
 - `selectors`
 - `lua` (alias: `generate`)
 - `screenshot`

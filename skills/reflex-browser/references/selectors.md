@@ -10,14 +10,14 @@ Generate selectors that are stable enough for automation and clear enough for re
    - run `summary` first.
 2. Guard page identity before selectors:
    - run `url` and verify expected page context.
-3. Ask selector helper:
-   - run `selector_helper` with intent text.
+3. Ask summary for ranked hints:
+   - run `summary --intent "<intent>"`.
 4. Validate without mutation:
    - run `visible` or `wait` with candidate selector.
 5. Perform action:
    - use `click`, `fill`, `type`, etc.
 6. Re-evaluate after DOM/navigation change:
-   - rerun `summary` and `selector_helper`.
+   - rerun `summary --intent`.
 
 ## Preferred Selector Order
 
@@ -59,16 +59,16 @@ On selector failure:
 
 1. capture `summary`
 2. re-check with `url`
-3. run `selector_helper` with refined intent
+3. run `summary --intent` with refined intent
 4. probe candidate with `visible`/`wait`
 5. retry action
 
 Escalation depth:
 
 - Start with `summary` for structural context and quick selector regeneration.
-- Use `html` only when `summary` + `selector_helper` cannot disambiguate structure or hidden state.
+- Use `html` only when `summary --intent` yields weak candidates after retry/validation.
 
 Circuit breaker:
 
 - Retry once for transient timing.
-- If the same intent fails twice (`no such element` or timeout), stop iterative extraction, re-discover selectors, and only then resume.
+- If the same intent fails twice, stop iterative extraction and re-discover with `summary --intent` before continuing.
