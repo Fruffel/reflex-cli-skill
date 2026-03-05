@@ -4,8 +4,6 @@
 
 - `status`
 - `start`
-- `new`
-- `restart`
 - `session`
 - `session-current` -> backend action `session_current`
 - `session-list` -> backend action `session_list`
@@ -52,6 +50,13 @@ Read output note:
 
 - prefer `response.data.value` for extracted values (`text`, `value`, `attribute`, `property`, `tag`, `title`, `url`)
 
+Interaction output note:
+
+- `click`, `fill`, `type`, `enter`, `tab` include:
+  - `response.selector`
+  - `response.lua`
+  - optional `response.data` metadata
+
 ## Analysis/Debug
 
 - `summary [maxItems] [--intent <query>] [--scope <interactive|content>]`
@@ -59,28 +64,51 @@ Read output note:
 - `lua` (alias: `generate`)
 - `screenshot`
 
+Summary output note:
+
+- parse `response.data.summary.version`
+- parse `response.data.summary.targets[]` as the selector contract
+
+Lua output note:
+
+- parse `response.data.script` (canonical generated script)
+- optional `response.data.generationGuidance` for rewrite/refactor constraints
+
+Screenshot output note:
+
+- parse `response.data.imageBase64` and `response.data.mimeType`
+
 ## Flags
 
 Global flags for all commands:
 
 - `--config <path>`
 - `--profile <path>`
-- `--timeout <ms>`
+- `--cli-timeout <ms>`
 
 Session flag rule:
 
-- `--session <id>` optional on all commands
+- `--session [id]` optional on all commands
 - omitted `--session` uses machine+repo scoped auto-session
-- explicit `--session` always overrides auto-session inference
+- `--session <id>` pins a manual session id
+- `--session` without value requests a backend-assigned id (only for `start`, `open`)
 
-Bootstrap/open flags (only on `start`, `new`, `restart`, `open`):
+Bootstrap/open flags (only on `start`, `open`):
 
 - `--width <px>`
 - `--height <px>`
 - `--headless <true|false>`
+- `--timeout <ms>` (backend Selenium retry timeout for that session)
 - `--open-wait <domcontentloaded|load|networkidle>`
 
 `open` URL handling:
 
 - absolute URL input is used directly
 - relative URL input is automatically resolved against current session URL
+
+Error output note:
+
+- for failed commands (`ok: false`), parse:
+  - `response.errorCode`
+  - `response.recoveryHint`
+  - `message` / `response.message` for human detail

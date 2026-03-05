@@ -14,19 +14,21 @@ Global flags:
 
 - `--config <path>`
 - `--profile <path>`
-- `--timeout <ms>`
+- `--cli-timeout <ms>`
 
 Session contract:
 
-- `--session <id>` is optional on all commands
+- `--session [id]` is optional on all commands
 - if omitted, CLI resolves a deterministic auto-session per `machine + repo`
-- explicit `--session` always overrides auto-session inference
+- `--session <id>` explicitly overrides auto-session inference
+- bare `--session` (no value) requests backend-assigned id on `start`, `open`
 
-Bootstrap/open options (`start`, `new`, `restart`, `open` only):
+Bootstrap/open options (`start`, `open` only):
 
 - `--width <px>`
 - `--height <px>`
 - `--headless <true|false>`
+- `--timeout <ms>`
 - `--open-wait <domcontentloaded|load|networkidle>`
 
 ## Backend Payload Mapping
@@ -41,12 +43,12 @@ CLI builds one backend payload with:
 - `profile`
 - `options` (only for bootstrap/open commands)
 
-`wait`, `visible`, `enabled`, and `selected` optional timeout positional arg maps to command timeout override, not `arg2`.
+`wait`, `visible`, `enabled`, and `selected` optional timeout positional arg maps to an action-level check timeout override (not `arg2` and not `--cli-timeout`).
 
 Smart preflight behavior:
 
 - if `open` receives a relative URL, CLI requests current URL and resolves `arg1` before sending `open`
-- missing/stale auto-sessions are recreated automatically before command dispatch
+- missing/stale auto-sessions are recreated only by bootstrap navigation commands (`start`, `open`)
 
 Connection lifecycle:
 

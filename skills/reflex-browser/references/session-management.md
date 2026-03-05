@@ -4,7 +4,7 @@
 
 1. Use one session id per automation flow.
 2. By default, let CLI infer auto-session from machine+repo scope when `--session` is omitted.
-3. Use `new` or `restart` when state is ambiguous.
+3. Use `start` (idempotent) to ensure a session exists before work.
 4. End sessions explicitly with `session-kill`.
 5. Reuse active sessions before starting a new browser window.
 
@@ -18,10 +18,11 @@
 
 ## Session and Profile Options
 
-- `--session <id>`:
+- `--session [id]`:
   - optional on all commands
-  - omitted value resolves to scoped auto-session
-  - use explicit values only when deterministic naming is needed
+  - when the flag is omitted, CLI resolves scoped auto-session
+  - `--session <id>` sets deterministic override session id
+  - bare `--session` (no value) requests backend-assigned id on `start` or `open`
 
 - `--profile <path>`:
   - enables persistent browser profile state
@@ -30,8 +31,6 @@
 ## Lifecycle Commands
 
 - `start`: start if absent / reuse active
-- `new`: force a fresh session context
-- `restart`: restart session context
 - `session-list`: inspect active sessions
 - `session-kill [targetSession]`: terminate one named session or inferred session when omitted
 
@@ -40,9 +39,9 @@
 For transport failures:
 
 1. rerun the same command (each invocation reconnects)
-2. run `status --session <sessionId>`
-3. run `session-list --session <sessionId>`
-4. continue or reset with `new --session <sessionId>`
+2. run `status` (or `status --session <sessionId>` for explicit-session flows)
+3. run `session-list` (or `session-list --session <sessionId>` for explicit-session flows)
+4. continue with `start` (or `start --session <sessionId>` for explicit-session flows)
 
 For action failures with stale DOM:
 

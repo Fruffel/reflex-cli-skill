@@ -34,19 +34,22 @@ Global flags (available on every command):
 
 - `--config <path>`
 - `--profile <path>`
-- `--timeout <ms>`
+- `--cli-timeout <ms>`
+  - default CLI command-response timeout is effectively `180000` ms unless explicitly overridden
 
 Session flag:
 
-- `--session <id>` is optional on all commands
+- `--session [id]` is optional on all commands
 - when omitted, CLI resolves an auto-session scoped to machine + repo path
-- explicit `--session` always overrides auto-session behavior
+- `--session <id>` pins a manual session id
+- `--session` without a value requests a backend-assigned session id (only for `start`, `open`)
 
-Bootstrap/open flags (supported only by `start`, `new`, `restart`, `open`):
+Bootstrap/open flags (supported only by `start`, `open`):
 
 - `--width <px>`
 - `--height <px>`
 - `--headless <true|false>`
+- `--timeout <ms>` (backend Selenium retry timeout for the session)
 - `--open-wait <domcontentloaded|load|networkidle>`
 
 ## Examples
@@ -61,6 +64,12 @@ Start with explicit session id:
 
 ```bash
 reflex-browser start --session my-session
+```
+
+Start with backend-assigned session id:
+
+```bash
+reflex-browser start --session
 ```
 
 Open a URL without passing `--session` (auto-session is inferred):
@@ -151,7 +160,7 @@ For `summary`, parse `response.data.summary.targets[]` (not legacy candidate-sty
 - Auto-session key is deterministic per `machine fingerprint + repo root`.
 - Repo root uses `git rev-parse --show-toplevel`; fallback is current working directory.
 - Mapping is stored in global `config.json` (`.../reflex-browser/config.json`) under `autoSessions`.
-- Stale/missing mapped sessions are recreated automatically.
+- Stale/missing mapped sessions are recreated only by `start` and `open`.
 - `reflex-browser start` without `--session` returns the existing healthy auto-session or recreates it.
 - `session-kill [targetSession]`:
   - with argument: kills that target session
@@ -163,13 +172,18 @@ For `summary`, parse `response.data.summary.targets[]` (not legacy candidate-sty
 
 Config precedence:
 
-1. CLI flags (`--config`, `--profile`, `--timeout`, command-specific options)
+1. CLI flags (`--config`, `--profile`, `--cli-timeout`, command-specific options)
 2. Environment variables
 3. Current working directory config (`.reflex-browser/config.{json,yaml,yml}`)
 4. Project config discovered by `cosmiconfig` (for example `.reflex-browser.json`)
 5. Global config:
    - Windows: `%APPDATA%\\reflex-browser\\config.{json,yaml,yml}`
    - Linux/macOS: `$XDG_CONFIG_HOME/reflex-browser/config.{json,yaml,yml}` or `~/.config/reflex-browser/config.{json,yaml,yml}`
+
+Config keys:
+
+- `timeout`: backend Selenium retry timeout in milliseconds (session-level, default `10000`)
+- `cliTimeout`: CLI transport timeout in milliseconds (effective minimum `180000` unless `--cli-timeout` is explicitly passed)
 
 Environment variables:
 
@@ -180,6 +194,9 @@ Environment variables:
 - `REFLEX_BROWSER_WIDTH`
 - `REFLEX_BROWSER_HEIGHT`
 - `REFLEX_BROWSER_TIMEOUT`
+  - backend Selenium retry timeout in milliseconds (default `10000`)
+- `REFLEX_BROWSER_CLI_TIMEOUT`
+  - defaults to at least `180000` ms for command-response waiting unless `--cli-timeout` is explicitly passed
 - `REFLEX_BROWSER_OPEN_WAIT` (`domcontentloaded`, `load`, `networkidle`)
 
 ## Development

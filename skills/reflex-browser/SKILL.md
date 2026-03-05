@@ -23,19 +23,22 @@ The CLI is single-action per process:
    - `npm install -g @reflexautomation/browser-cli`
 2. Start or reuse a session:
    - `reflex-browser start`
-3. Capture returned `session` from JSON response.
-4. Reuse that session id on each next command:
-   - `reflex-browser open https://example.com --session <sessionId>`
-5. End with `session-kill [targetSession]` (or `session-kill --session <sessionId>`) for sessions created by this flow.
+3. Default to auto-session mode for normal agent runs:
+   - do **not** pass `--session` on follow-up commands
+   - example: `reflex-browser open https://example.com`
+4. Use explicit `--session` only for deterministic override:
+   - example: `reflex-browser open https://example.com --session <sessionId>`
+5. End with `session-kill` in auto-session mode.
+   - if you used an explicit session id, use `session-kill --session <sessionId>` (or `session-kill <sessionId>`)
 
 ## Command Lifecycle (Required)
 
 1. Send actions as separate CLI invocations.
-2. Keep one logical session id for the task.
-3. Omit `--session` when auto-session behavior is preferred; set it explicitly when deterministic override is required.
+2. Keep one logical session context for the task (auto-session by default).
+3. Default rule: omit `--session` on commands unless explicit override is required.
 4. Execute sequentially: run one command, inspect response, then run the next.
 5. On transport failure, rerun the command as a new invocation.
-6. If you started a session for the task, cleanup with `session-kill` when done unless the user explicitly asks to keep it open.
+6. Cleanup with `session-kill` when done unless the user explicitly asks to keep the session open.
 
 ## Response Handling (Required)
 
@@ -75,10 +78,15 @@ Helper script:
 
 ## Session Selection Rules
 
-1. Reuse an existing session when available and appropriate for the task.
-2. Use `start` to get-or-create the scoped auto-session unless a fresh explicit id is required.
-3. Use `start --session <id>` only when deterministic naming is required.
-4. Pass `--profile` only when persistent browser state is intentionally needed.
+1. Default to scoped auto-session mode.
+2. Use `start` to get-or-create the scoped auto-session.
+3. After `start`, continue commands without `--session` in normal flows.
+4. Use explicit `--session <id>` only when:
+   - the user asks to pin/reuse a specific session id, or
+   - the task requires switching between multiple concurrent sessions.
+5. Use bare `--session` (no value) only on `start` or `open` when a fresh backend-assigned session id is explicitly required.
+6. Do not pass `--session` by habit in single-flow tasks.
+7. Pass `--profile` only when persistent browser state is intentionally needed.
 
 ## Hard Rules
 
@@ -101,7 +109,7 @@ Helper script:
 3. Prefer stable page-level wait targets over fragile positional selectors.
 4. If an action fails once, retry once. If it fails again, run `summary --intent` and continue with updated selectors.
 5. After 2 consecutive failures for the same intent, stop the loop and run recovery; never keep incrementing positional selectors blindly.
-6. For `wait`/`visible`/`enabled`/`selected`, pass per-check timeout as the positional argument (`wait "<selector>" 8000`); reserve global `--timeout` for transport/command envelope timeout.
+6. For `wait`/`visible`/`enabled`/`selected`, pass per-check timeout as the positional argument (`wait "<selector>" 8000`); reserve global `--cli-timeout` for transport/command envelope timeout.
 
 ## Anti-Patterns (Forbidden)
 
@@ -114,6 +122,33 @@ Helper script:
 7. Jumping to full `html` dumps before trying `summary --intent` for selector recovery.
 8. Starting extra sessions during the same task without explicit need and cleanup.
 9. Hiding browser flow in long shell scripts/loops instead of observable one-command-at-a-time CLI calls.
+10. Passing explicit `--session` by habit in single-flow tasks that should use default auto-session behavior.
+
+## Output Contract (Required)
+
+1. Always evaluate envelope first:
+   - `ok`
+   - `action`
+   - `session`
+2. On failure (`ok: false`), parse structured error fields first:
+   - `response.errorCode`
+   - `response.recoveryHint`
+   - then `message`/`response.message` for display text
+3. Read actions (`text`, `value`, `attribute`, `property`, `tag`, `title`, `url`) return extracted values in:
+   - `response.data.value`
+4. Interaction actions (`click`, `fill`, `type`, `enter`, `tab`) return execution metadata in:
+   - `response.selector`
+   - `response.lua`
+   - optional `response.data` fields
+5. Summary contract:
+   - `response.data.summary.version`
+   - `response.data.summary.targets[]`
+6. Lua generation:
+   - `response.data.script` as canonical script payload
+   - `response.data.generationGuidance` as post-processing constraints
+7. Screenshot contract:
+   - `response.data.imageBase64`
+   - `response.data.mimeType`
 
 ## Repeated Items Pattern (Required)
 
@@ -131,10 +166,10 @@ For normal CLI usage, prefer `open <href>` directly (relative URLs are auto-reso
 
 ```bash
 get_value() { jq -r '.response.data.value // empty'; }
-get_url() { reflex-browser url --session "$S" | get_value; }
+get_url() { reflex-browser url | get_value; }
 open_target() {
   local href="$1"
-  reflex-browser open "$href" --session "$S" >/dev/null
+  reflex-browser open "$href" >/dev/null
   get_url
 }
 ```
@@ -150,12 +185,12 @@ function Get-Value {
 }
 
 function Get-Url {
-  reflex-browser url --session $env:S | ConvertFrom-Json | Get-Value
+  reflex-browser url | ConvertFrom-Json | Get-Value
 }
 
 function Open-Target {
   param([string]$Href)
-  reflex-browser open $Href --session $env:S | Out-Null
+  reflex-browser open $Href | Out-Null
   Get-Url
 }
 ```
