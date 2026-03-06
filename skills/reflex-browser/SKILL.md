@@ -61,6 +61,10 @@ Agent defaults:
    - `selectorType`
    - `confidence`
    - `reason`
+   - optional steering:
+     - `status`
+     - `hint`
+     - `fallback`
 3. Treat `summary.version` + `summary.targets[]` as the stable parser contract; avoid parsing deep fields from full summary output by default.
 4. Do not parse `elements`/`actions`/`candidates`-style fields from summary output.
 5. Keep extraction flow deterministic:
@@ -153,6 +157,10 @@ Helper script:
 5. Summary contract:
    - `response.data.summary.version`
    - `response.data.summary.targets[]`
+   - Prefer targets with `status: "ready"`.
+   - Treat `status: "retry"` as a one-retry candidate, then refresh `summary`.
+   - Treat `status: "avoid"` as a recovery hint, not a first-choice selector.
+   - Use `fallback` only when the primary selector fails or the target is marked `avoid`.
 6. Lua generation:
    - `response.data.script` as canonical script payload
    - `response.data.generationGuidance` as post-processing constraints

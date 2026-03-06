@@ -148,6 +148,10 @@ Summary parser contract:
   - `confidence`
   - `score`
   - `reason`
+  - Optional steering fields:
+    - `status` (`ready`, `retry`, `avoid`)
+    - `hint`
+    - `fallback`
 
 ## JSON Output Envelope
 
