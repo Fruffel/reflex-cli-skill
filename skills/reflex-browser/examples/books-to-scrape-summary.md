@@ -2,7 +2,7 @@
 
 Use this example when an agent needs to:
 
-- navigate a category site with `summary --intent`
+- navigate a category site with `summary`
 - avoid unnecessary `--session`
 - extract repeated item links from a listing page
 - open detail pages and summarize the first few results
@@ -13,7 +13,7 @@ This is an AI-oriented workflow example, not a shell script to hide execution. R
 
 1. Start the scoped auto-session once.
 2. Keep normal commands in auto-session mode without repeating `--session`.
-3. Use `summary --intent` to discover category links first.
+3. Use `summary` to discover category links first.
 4. If `summary` does not surface item-level selectors, derive them from `html` evidence instead of guessing.
 5. Open each book page and extract the product description with `text`.
 6. End with `session-kill`.
@@ -25,10 +25,10 @@ Open the site:
 ```bash
 reflex-browser start
 reflex-browser open https://books.toscrape.com/index.html
-reflex-browser summary 20 --intent "fiction category link"
+reflex-browser summary 20 -i -c
 ```
 
-Open the Fiction category using the high-confidence link from `summary.targets[]`:
+Open the Fiction category using the matching category link from `response.data.summary.targets[]`:
 
 ```bash
 reflex-browser open "catalogue/category/books/fiction_10/index.html"
@@ -97,7 +97,7 @@ Go back to the home page, discover Horror with `summary`, and repeat the same pa
 
 ```bash
 reflex-browser open https://books.toscrape.com/index.html
-reflex-browser summary 20 --intent "horror category link"
+reflex-browser summary 20 -i -c
 reflex-browser open "catalogue/category/books/horror_31/index.html"
 ```
 
@@ -139,7 +139,7 @@ reflex-browser session-kill
 ## Why This Pattern Is Good
 
 - It does not keep repeating `--session` in a single-flow task.
-- It uses `summary --intent` for category discovery and falls back to `html` only when item-level selectors are not surfaced.
+- It uses `summary` for category discovery and falls back to `html` only when item-level selectors are not surfaced.
 - It anchors repeated-item selectors at the list item level.
 - It shows where the repeated-item selector actually came from, instead of relying on an unstated guess.
 - It uses field-specific reads (`attribute`, `text`) instead of generic DOM evaluation.
@@ -149,5 +149,5 @@ reflex-browser session-kill
 
 - Do not run `reflex-browser --help` in the middle of the task to figure out the workflow; consult `skills/reflex-browser/SKILL.md`.
 - Do not switch to explicit `--session` unless you intentionally need multiple concurrent sessions or a user-requested pinned id.
-- Do not keep indexing new selectors after failures; rerun `summary --intent` if page state changes or selectors go stale.
+- Do not keep indexing new selectors after failures; rerun `summary` if page state changes or selectors go stale.
 - Do not prefer `eval` when `attribute`, `text`, `summary`, or `open` already cover the task.

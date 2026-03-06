@@ -63,7 +63,7 @@ On selector failure:
 
 1. capture `summary`
 2. re-check with `url`
-3. run `summary --intent` with refined intent
+3. run `summary` again with refined flags and narrower scope
    - add `-s` to focus on the likely container
    - add `-C` if the page is using cursor-driven controls
 4. probe candidate with `visible`/`wait`

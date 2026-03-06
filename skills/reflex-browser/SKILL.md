@@ -98,7 +98,7 @@ Helper script:
 
 1. Bridge is Chrome-only.
 2. Do **not** send `options.browser`.
-3. Recompute selectors after DOM changes (`summary --intent`).
+3. Recompute selectors after DOM changes with `summary`.
    - Use `-i` for interactive discovery.
    - Add `-C` for cursor-interactive components.
    - Add `-c` to reduce structural noise.
