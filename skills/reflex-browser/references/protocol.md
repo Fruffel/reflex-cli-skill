@@ -1,5 +1,11 @@
 # Protocol Reference (Stateless CLI)
 
+The structured CLI/browser contract now lives in:
+
+- `reflex browser help --json`
+
+Use this document for transport/model reminders, not as the primary command listing.
+
 ## Transport Model
 
 - Invocation: `reflex-browser <command> [args] [flags]`

@@ -4,8 +4,8 @@
 
 1. Use one session id per automation flow.
 2. By default, let CLI infer auto-session from machine+repo scope when `--session` is omitted.
-3. Use `start` (idempotent) to ensure a session exists before work.
-4. End sessions explicitly with `session-kill`.
+3. Use `reflex browser start` (idempotent) to ensure a session exists before work.
+4. End sessions explicitly with `reflex browser session-kill`.
 5. Reuse active sessions before starting a new browser window.
 6. Do not keep repeating `--session` on every command unless you intentionally need an explicit override.
 7. When engine changes (`selenium` vs `playwright`), use `start` or `open` to recreate the same inferred auto-session id with the new engine.
@@ -13,10 +13,10 @@
 ## Stateless Workflow
 
 1. Reuse an existing session when it already matches the target flow.
-2. Run `reflex-browser start` when a fresh session is needed.
+2. Run `reflex browser start` when a fresh session is needed.
 3. Read returned JSON and capture `session` when explicit reuse is needed.
 4. Run subsequent commands without `--session` (or pass explicit `--session <sessionId>` to override).
-5. Run `session-kill [targetSession]` when complete.
+5. Run `reflex browser session-kill [targetSession]` when complete.
 
 ## Session and Profile Options
 
@@ -36,24 +36,24 @@
 
 ## Lifecycle Commands
 
-- `start`: start if absent / reuse active
-- `session-list`: inspect active sessions
-- `session-kill [targetSession]`: terminate one named session or inferred session when omitted
+- `reflex browser start`: start if absent / reuse active
+- `reflex browser session-list`: inspect active sessions
+- `reflex browser session-kill [targetSession]`: terminate one named session or inferred session when omitted
 
 ## Failure Recovery
 
 For transport failures:
 
 1. rerun the same command (each invocation reconnects)
-2. run `status` (or `status --session <sessionId>` for explicit-session flows)
-3. run `session-list` (or `session-list --session <sessionId>` for explicit-session flows)
-4. continue with `start` (or `start --session <sessionId>` for explicit-session flows)
+2. run `reflex browser status` (or `reflex browser status --session <sessionId>` for explicit-session flows)
+3. run `reflex browser session-list` (or `reflex browser session-list --session <sessionId>` for explicit-session flows)
+4. continue with `reflex browser start` (or `reflex browser start --session <sessionId>` for explicit-session flows)
 
 For action failures with stale DOM:
 
 1. re-check `url` and `title`
 2. verify expected page context before selector actions
-3. run `summary`
+3. run `reflex browser summary`
    - add `-s` to focus on the likely container
    - add `-C` when the UI is cursor-driven
 4. retry action with updated high-confidence selector hint
@@ -61,7 +61,7 @@ For action failures with stale DOM:
 
 For auto-session engine mismatches:
 
-1. run `start` or `open` with the desired `--engine` to recreate the same inferred auto-session id
+1. run `reflex browser start` or `reflex browser open` with the desired `--engine` to recreate the same inferred auto-session id
 2. rerun non-bootstrap commands only after that bootstrap succeeds
 
 For looped detail-page traversal:

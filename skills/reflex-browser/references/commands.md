@@ -1,129 +1,18 @@
 # Command Reference
 
-Quick guidance:
+The CLI is now the source of truth for browser command syntax.
+
+Use:
+
+- `reflex browser --help`
+- `reflex browser help --json`
+
+Use this file only for workflow reminders:
 
 - default to omitted `--session`; scoped auto-session is the normal agent path
-- default to `summary` with `-i`, `-C`, `-c`, `-d`, and `-s` for selector discovery; treat `eval` and `html` as fallback/debug tools
-- use `--help` for syntax lookup, not as the main decision source for workflow strategy
+- default to `summary` with `-i`, `-C`, `-c`, `-d`, and `-s` for selector discovery and recovery
+- prefer visible refs, button labels, link text, and `href` values from `summary.targets[]`
+- use browser CLI directly for one-off website tasks; do not create a script unless the user asks for one or the task clearly needs reusable automation
+- if browser commands alone become too complex, prefer `reflex lua exec ...` before writing a saved script file
 
-## Session/System
-
-- `status`
-- `start`
-- `session`
-- `session-current` -> backend action `session_current`
-- `session-list` -> backend action `session_list`
-- `session-kill [targetSession]` -> backend action `session_kill`
-
-## Navigation/Page
-
-- `open <url>`
-- `url`
-- `title`
-- `html` (alias: `source`)
-- `back`
-- `forward`
-- `refresh`
-- `eval <javascript>`
-
-## Tabs
-
-- `switch-next-tab` -> `switch_next_tab`
-- `switch-prev-tab` -> `switch_prev_tab`
-- `close-tab` -> `close_tab`
-
-## Interactions
-
-- `click <selector>`
-- `fill <selector> <text>`
-- `type <selector> <text>`
-- `enter <selector>`
-- `tab <selector>`
-
-## Reads/Validation
-
-- `text <selector>` (alias: `gettext`)
-- `value <selector>` (alias: `getvalue`)
-- `attribute <selector> <attributeName>`
-- `property <selector> <propertyName>`
-- `tag <selector>`
-- `wait <selector> [timeoutMs]`
-- `visible <selector> [timeoutMs]`
-- `enabled <selector> [timeoutMs]`
-- `selected <selector> [timeoutMs]`
-
-Read output note:
-
-- prefer `response.data.value` for extracted values (`text`, `value`, `attribute`, `property`, `tag`, `title`, `url`)
-
-Interaction output note:
-
-- `click`, `fill`, `type`, `enter`, `tab` include:
-  - `response.selector`
-  - `response.lua`
-  - optional `response.data` metadata
-
-## Analysis/Debug
-
-- `summary [maxItems]`
-- `selectors`
-- `lua` (alias: `generate`)
-- `screenshot`
-
-Summary output note:
-
-- parse `response.data.summary.version`
-- parse `response.data.summary.targets[]` as the selector contract
-
-Lua output note:
-
-- parse `response.data.script` (canonical generated script)
-- optional `response.data.generationGuidance` for rewrite/refactor constraints
-
-Screenshot output note:
-
-- parse `response.data.imageBase64` and `response.data.mimeType`
-
-Summary flags:
-
-- `-i, --interactive`
-- `-C, --cursor`
-- `-c, --compact`
-- `-d, --depth <n>`
-- `-s, --selector <selector>`
-
-## Flags
-
-Global flags for all commands:
-
-- `--config <path>`
-- `--engine <selenium|playwright|sel|play>`
-- `--profile <path>`
-- `--cli-timeout <ms>`
-
-Session flag rule:
-
-- `--session [id]` optional on all commands
-- omitted `--session` uses machine+repo scoped auto-session
-- `--session <id>` pins a manual session id
-- `--session` without value requests a backend-assigned id (only for `start`, `open`)
-
-Bootstrap/open flags (only on `start`, `open`):
-
-- `--width <px>`
-- `--height <px>`
-- `--headless <true|false>`
-- `--timeout <ms>` (backend action timeout for that session)
-- `--open-wait <domcontentloaded|load|networkidle>`
-
-`open` URL handling:
-
-- absolute URL input is used directly
-- relative URL input is automatically resolved against current session URL
-
-Error output note:
-
-- for failed commands (`ok: false`), parse:
-  - `response.errorCode`
-  - `response.recoveryHint`
-  - `message` / `response.message` for human detail
+For the exact machine-readable contract, always inspect `reflex browser help --json`.

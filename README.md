@@ -1,15 +1,23 @@
-# Reflex Browser CLI
+# Reflex CLI
 
-`@reflexautomation/browser-cli` runs Reflex Agent browser actions as stateless CLI commands.
+`@reflexautomation/reflex-cli` unifies browser automation, scripting, generated library commands, and local Reflex agent management in one CLI.
 
-Each invocation:
+It has four built-in command groups and metadata-driven top-level library commands:
 
-1. connects to the agent
-2. sends exactly one backend action
-3. prints exactly one JSON object to stdout
-4. exits (`0` on success, `1` on failure)
+- browser automation commands: `reflex browser open`, `reflex browser click`, `reflex browser summary`, ...
+- local agent commands: `reflex agent start`, `reflex agent status`, `reflex agent download`, ...
+- Lua scripting commands: `reflex lua run`, `reflex lua exec`, `reflex lua libs`, ...
+- Python scripting commands: `reflex python run`, `reflex python exec`, `reflex python libs`, ...
+- generated library commands: `reflex rest get ...`, `reflex xlsx open ...`, ...
 
-## Install (Global CLI)
+Browser commands keep the machine-friendly contract:
+
+1. connect to the agent
+2. send exactly one backend action
+3. print exactly one JSON object to stdout
+4. exit (`0` on success, `1` on failure)
+
+## Install
 
 Configure npm scope:
 
@@ -21,187 +29,121 @@ npm config set "//git.bqa-solutions.nl/api/packages/reflex/npm/:_authToken" "YOU
 Install:
 
 ```bash
-npm install -g @reflexautomation/browser-cli
+npm install -g @reflexautomation/reflex-cli
 ```
 
-## Command Model
+## Browser Commands
 
 ```bash
-reflex-browser <command> [args] [flags]
+reflex browser <command> [args] [flags]
 ```
 
-Global flags (available on every command):
+Global flags:
 
 - `--config <path>`
 - `--engine <selenium|playwright|sel|play>`
 - `--profile <path>`
 - `--cli-timeout <ms>`
-  - default CLI command-response timeout is effectively `180000` ms unless explicitly overridden
 
-Session flag:
+Session behavior:
 
-- `--session [id]` is optional on all commands
-- when omitted, CLI resolves an auto-session scoped to machine + repo path
+- `--session [id]` is optional on all browser commands
+- omitted `--session` uses an auto-session scoped to machine + repo path
 - `--session <id>` pins a manual session id
-- `--session` without a value requests a backend-assigned session id (only for `start`, `open`)
+- bare `--session` requests a backend-assigned session id on `start` and `open`
 
-Bootstrap/open flags (supported only by `start`, `open`):
+Bootstrap flags (`start`, `open`):
 
 - `--width <px>`
 - `--height <px>`
 - `--headless <true|false>`
-- `--timeout <ms>` (backend action timeout for the session)
+- `--timeout <ms>`
 - `--open-wait <domcontentloaded|load|networkidle>`
 
-## Examples
-
-Get or create the default auto-session for current machine + repo:
+Examples:
 
 ```bash
-reflex-browser start
+reflex browser start
+reflex browser start --session my-session
+reflex browser open https://example.com
+reflex browser fill "css=input[name='email']" "user@example.com"
+reflex browser wait "css=.dashboard" 8000
+reflex browser summary 25 -i -c
 ```
 
-Start with explicit session id:
+## Script Commands
 
 ```bash
-reflex-browser start --session my-session
+reflex lua run scripts/test.lua
+reflex lua exec "print(Rest.get('https://httpbin.org/get').status)"
+reflex python run scripts/test.py
+reflex python exec "print(Rest.get('https://httpbin.org/get')['status'])"
 ```
 
-Start with backend-assigned session id:
+The script endpoints stream NDJSON events such as `start`, `stdout`, `result`, `error`, and `end`.
+
+For browser automation scripts, first use `reflex browser ...` to inspect the page, session behavior, and selectors. Then turn that knowledge into Lua or Python script code.
+
+## Generated Library Commands
+
+Generated commands come from agent metadata built from `@Lua`, `@LuaDoc`, and `@LuaInner`.
 
 ```bash
-reflex-browser start --session
+reflex rest get https://httpbin.org/get
+reflex xlsx open report.xlsx sheet Sheet1 get-cell 1 1
+reflex lua libs
+reflex python libs
+reflex help rest
+reflex rest --help
 ```
 
-Start a Playwright-backed auto-session:
+Complex table/object arguments accept inline JSON or `@file` JSON input.
+
+Generated direct commands are best for discovery and one-off execution. If you need branching logic, loops, multi-step flows, or browser automation, prefer writing a Lua or Python script instead.
+
+## Agent Commands
 
 ```bash
-reflex-browser start --engine play
+reflex agent <command> [flags]
 ```
 
-Open a URL without passing `--session` (auto-session is inferred):
+Available commands:
+
+- `run` - run the agent in the foreground
+- `start` - run the agent in the background
+- `status` - inspect background agent state
+- `logs` - print recent background logs
+- `stop` - stop the background agent
+- `download` - download or update `agent.jar`
+- `runtime install` - install managed Java
+- `runtime status` - inspect Java runtime selection
+
+Examples:
 
 ```bash
-reflex-browser open https://example.com
+reflex agent download
+reflex agent download --token "$BQAGiteaToken"
+reflex agent runtime install
+reflex agent start --token "$BQAGiteaToken"
+reflex agent start
+reflex agent status
+reflex agent logs --lines 100
+reflex agent stop
 ```
 
-Open a URL in an explicit session:
+`reflex agent run` and `reflex agent start` download `agent.jar` on demand when needed.
 
-```bash
-reflex-browser open https://example.com --session my-session
-```
-
-Fail fast if page context is wrong:
-
-```bash
-reflex-browser url
-# stop if URL is not what you expect before running selector commands
-```
-
-Open a relative URL safely (resolved against current session URL):
-
-```bash
-reflex-browser open "../../../a-book_1/index.html"
-```
-
-Fill an input:
-
-```bash
-reflex-browser fill "css=input[name='email']" "user@example.com"
-```
-
-Wait with custom timeout:
-
-```bash
-reflex-browser wait "css=.dashboard" 8000
-```
-
-Get a compact summary snapshot of interactive elements:
-
-```bash
-reflex-browser summary 25 -i -c
-```
-
-Include cursor-interactive elements used by modern component UIs:
-
-```bash
-reflex-browser summary 25 -i -C
-```
-
-Limit depth and scope snapshot to a specific container:
-
-```bash
-reflex-browser summary 40 -i -c -d 5 -s "#main"
-```
-
-Prefer summary snapshots first and fetch `html` only as a last resort when selector hints are weak or fail validation.
-
-Summary filters:
-
-- `-i, --interactive`: only interactive elements (links/buttons/inputs)
-- `-C, --cursor`: include cursor-interactive elements (`onclick`, `cursor:pointer`, `tabindex`)
-- `-c, --compact`: remove empty structural elements
-- `-d, --depth <n>`: limit tree depth
-- `-s, --selector <sel>`: scope to CSS selector
-
-Use `html`, `text`, or field-specific reads for deep content extraction.
-
-Summary parser contract:
-
-- `response.data.summary.version`
-- `response.data.summary.targets[]`
-  - `selector`
-  - `selectorType`
-  - `confidence`
-  - `score`
-  - `reason`
-  - Optional steering fields:
-    - `status` (`ready`, `retry`, `avoid`)
-    - `hint`
-    - `fallback`
-    - `ref` — short-lived element ref (`@r1`, `@r2`, …); use directly as a selector in subsequent actions when present
-
-## JSON Output Envelope
-
-All commands print one JSON object:
-
-- `ok`
-- `action`
-- `session` (if known)
-- `timingMs`
-- `response` (action-specific response payload)
-- `message` (error detail on failure)
-
-Use envelope fields (`ok`, `action`, `session`) as source-of-truth. The CLI compacts mirrored duplicates from `response` where possible.
-
-For read-style actions (`text`, `attribute`, `property`, `value`, `tag`, `title`, `url`), use `response.data.value` as the extracted value.
-
-For `summary`, parse `response.data.summary.targets[]` (not legacy candidate-style fields).
-
-## Auto-Session Scope
-
-- Auto-session key is deterministic per `machine fingerprint + repo root`.
-- Repo root uses `git rev-parse --show-toplevel`; fallback is current working directory.
-- Mapping is stored in global `config.json` (`.../reflex-browser/config.json`) under `autoSessions`.
-- Stale/missing mapped sessions are recreated only by `start` and `open`.
-- Engine changes keep the same inferred auto-session id; `start`/`open` recreate that session with the configured engine when needed.
-- Non-bootstrap commands fail fast on engine mismatch so you do not silently keep driving the old engine session.
-- `reflex-browser start` without `--session` returns the existing healthy auto-session or recreates it.
-- `session-kill [targetSession]`:
-  - with argument: kills that target session
-  - without argument + `--session`: kills that explicit session
-  - without argument and without `--session`: kills inferred auto-session for current scope
-  - successful kill clears scope mapping when it points to the killed session
+When run in an interactive terminal, `reflex agent download` and `reflex agent runtime install` show simple built-in progress bars and phase updates. In non-interactive shells they fall back to plain text.
 
 ## Configuration
 
-You can configure the CLI globally, per project, or per run.
+The canonical config namespace is now `reflex`.
 
-Common places:
+Common locations:
 
-- global: `~/.config/reflex-browser/config.json` on Linux/macOS, `%APPDATA%\\reflex-browser\\config.json` on Windows
-- per-repo: `.reflex-browser/config.json`
-- one-off override: `reflex-browser --config ./path/to/config.json ...`
+- global: `~/.config/reflex/config.json` on Linux/macOS, `%APPDATA%\reflex\config.json` on Windows
+- per-repo: `.reflex/config.json`
+- one-off override: `reflex --config ./path/to/config.json ...`
 
 Example `config.json`:
 
@@ -215,73 +157,55 @@ Example `config.json`:
   "height": 900,
   "timeout": 15000,
   "cliTimeout": 180000,
-  "openWait": "domcontentloaded"
+  "openWait": "domcontentloaded",
+  "port": 7001,
+  "key": "dev",
+  "javaSource": "auto"
 }
 ```
 
-Example `config.yaml`:
+Environment variables for browser commands:
 
-```yaml
-agentUrl: http://localhost:7001
-agentKey: dev
-engine: selenium
-headless: true
-width: 1440
-height: 900
-timeout: 15000
-cliTimeout: 180000
-openWait: domcontentloaded
-```
+- `REFLEX_URL`
+- `REFLEX_KEY`
+- `REFLEX_ENGINE`
+- `REFLEX_PROFILE`
+- `REFLEX_HEADLESS`
+- `REFLEX_WIDTH`
+- `REFLEX_HEIGHT`
+- `REFLEX_TIMEOUT`
+- `REFLEX_CLI_TIMEOUT`
+- `REFLEX_OPEN_WAIT`
 
-Engine values:
+Agent auth/download state:
 
-- `selenium` or `sel`
-- `playwright` or `play`
+- global auth token: `~/.config/reflex/auth.json`
+- cached jar: `~/.cache/reflex/agent.jar`
+- managed runtime: `~/.cache/reflex/runtime/`
+- token env override: `BQAGiteaToken`
+- one-off CLI token: `reflex agent download --token <value>`
+- bootstrap token also works on: `reflex agent run --token <value>`, `reflex agent start --token <value>`
 
-Typical usage:
+## JSON Output Envelope
 
-- set `engine: "selenium"` when you want Selenium to be the default for this machine or repo
-- set `engine: "play"` when you want generated/recreated sessions to use Playwright
-- override per command with `--engine play` or `--engine sel`
-- when you switch engines, run `start` or `open` first; the CLI keeps the same inferred auto-session id and recreates that session with the new engine
+Browser commands always print one JSON object with:
 
-Config precedence:
+- `ok`
+- `action`
+- `session` (if known)
+- `timingMs`
+- `response`
+- `message` on failure
 
-1. CLI flags (`--config`, `--engine`, `--profile`, `--cli-timeout`, command-specific options)
-2. Environment variables
-3. Current working directory config (`.reflex-browser/config.{json,yaml,yml}`)
-4. Project config discovered by `cosmiconfig` (for example `.reflex-browser.json`)
-5. Global config:
-   - Windows: `%APPDATA%\\reflex-browser\\config.{json,yaml,yml}`
-   - Linux/macOS: `$XDG_CONFIG_HOME/reflex-browser/config.{json,yaml,yml}` or `~/.config/reflex-browser/config.{json,yaml,yml}`
+Use `response.data.value` for read-style commands and `response.data.summary.targets[]` for `summary` parsing.
 
-Config keys:
-
-- `engine`: browser engine for new/recreated sessions (`selenium` default; also accepts `sel`, `play`, `playwright`)
-- `timeout`: backend action timeout in milliseconds (session-level, default `10000`)
-- `cliTimeout`: CLI transport timeout in milliseconds (effective minimum `180000` unless `--cli-timeout` is explicitly passed)
-
-Environment variables:
-
-- `REFLEX_AGENT_URL`
-- `REFLEX_AGENT_KEY`
-- `REFLEX_BROWSER_ENGINE`
-- `REFLEX_BROWSER_PROFILE`
-- `REFLEX_BROWSER_HEADLESS`
-- `REFLEX_BROWSER_WIDTH`
-- `REFLEX_BROWSER_HEIGHT`
-- `REFLEX_BROWSER_TIMEOUT`
-  - backend action timeout in milliseconds (default `10000`)
-- `REFLEX_BROWSER_CLI_TIMEOUT`
-  - defaults to at least `180000` ms for command-response waiting unless `--cli-timeout` is explicitly passed
-- `REFLEX_BROWSER_OPEN_WAIT` (`domcontentloaded`, `load`, `networkidle`)
+Script and generated library commands print NDJSON events instead of a single JSON envelope.
 
 ## Development
 
 ```bash
 mise install
 npm ci
-npm run validate
 npm run build
 npm test
 ```
