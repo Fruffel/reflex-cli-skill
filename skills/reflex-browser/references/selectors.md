@@ -32,6 +32,7 @@ Always re-run `summary` after such actions before using refs again. A stale ref 
    - run `url` and verify expected page context.
 3. Ask summary for ranked hints:
    - run `summary -i -c` for normal interactive discovery.
+   - if the first pass is too broad, add `-s "<selector>"` before changing tools.
    - add `-C` when the page uses non-semantic clickable UI.
    - add `-s "<selector>"` to narrow discovery to one container.
    - add `-d <n>` when large pages produce too much noise.
@@ -41,6 +42,26 @@ Always re-run `summary` after such actions before using refs again. A stale ref 
    - use `click`, `fill`, `type`, etc.
 6. Re-evaluate after DOM/navigation change:
    - rerun `summary` with the narrowest useful flags.
+
+## Blocking Overlays
+
+If `summary` returns only cookie/consent/chat widgets or similar overlays:
+
+1. clear the blocking widget first with its `ref` or selector
+2. rerun `summary`
+3. continue selector discovery only after the overlay is gone
+4. do not switch to `eval`, `html`, or external fetching while the overlay is still blocking the page
+
+## Summary Refinement Order
+
+When the first `summary` pass is weak, keep the same tool and change one thing at a time:
+
+1. start with `summary 20 -i -c` — count 20 is enough for most pages
+2. narrow scope with `-s`
+3. add `-C` for cursor-driven or non-semantic controls
+4. tune `-d` for noisy pages
+5. only increase count beyond 20 when the page has many repeated items and you need targets for more of them
+6. only then consider `html`, and only after 2 materially different `summary` passes still fail
 
 ## Preferred Selector Order
 
@@ -85,13 +106,17 @@ On selector failure:
 3. run `summary` again with refined flags and narrower scope
    - add `-s` to focus on the likely container
    - add `-C` if the page is using cursor-driven controls
+   - tune `-d` or summary count if the page is still noisy
+   - clear overlays first if summary is dominated by consent/chat widgets
 4. probe candidate with `visible`/`wait`
 5. retry action
 
 Escalation depth:
 
 - Start with `summary` for structural context and quick selector regeneration.
-- Use `html` only when `summary` yields weak candidates after retry/validation.
+- Clear blocking overlays before escalating.
+- Keep refining `summary` before switching tools.
+- Use `html` only when `summary` still yields weak candidates after 2 materially different refinement passes plus retry/validation.
 
 Circuit breaker:
 

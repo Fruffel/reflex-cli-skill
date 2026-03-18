@@ -3,26 +3,29 @@ name: reflex-browser
 description: Use this skill for browser automation through Reflex Agent using the reflex CLI, including session handling, command flow, selectors, and protocol-safe request patterns.
 ---
 
-# Reflex Browser Skill (Agent-Only)
+# Reflex Browser Skill
 
 ## Purpose
 
-Use this skill when you need browser automation through Reflex Agent via stateless CLI commands.
+Use this skill when the task involves a **website or browser**: navigating pages, clicking elements, reading content, filling forms, scraping data, or automating a web flow.
 
-When the end goal is to write a Lua or Python browser automation script, still start here first: use `reflex browser ...` to inspect the site, verify the flow, and stabilize selectors before turning that knowledge into script code.
+This skill covers interactive browser work via `reflex browser ...` CLI commands. Each command is a single stateless action — run one, inspect the JSON response, then decide the next step.
 
-Use the CLI itself as the command/protocol source of truth:
+When the end goal is a reusable Lua or Python browser automation script, **still start here first**: use `reflex browser ...` to inspect the site, verify the flow, and stabilize selectors before writing script code. Then switch to the `reflex-scripting` skill for the script itself.
 
-- `reflex browser --help`
-- `reflex browser help --json`
+## When To Use This Skill
 
-Default behavior for website tasks:
+- User asks to interact with a website (navigate, click, fill, read, scrape)
+- User asks to inspect or explore a page
+- User asks for browser-based data collection
+- User asks for a browser automation script (start here for discovery, then `reflex-scripting` for the script)
 
-- if the user asks to interact with a site, inspect a page, click buttons, read content, or collect data, use `reflex browser ...`
-- do not jump straight to creating a Lua or Python script unless the user explicitly asks for a script or reusable automation
-- if a one-off task becomes too complex for browser commands alone, prefer `reflex lua exec ...` before creating a saved script file
+## When NOT To Use This Skill
 
-The browser CLI is single-action per process. Run one `reflex browser <command>` invocation, inspect the JSON response, then run the next command.
+- One-off file manipulation (xlsx, csv, json) without a browser → use `reflex-scripting`
+- REST API calls → use `reflex-scripting`
+- Data transforms or batch processing without a browser → use `reflex-scripting`
+- Writing a script after browser discovery is done → use `reflex-scripting`
 
 ## Quick Start
 
@@ -40,11 +43,24 @@ The browser CLI is single-action per process. Run one `reflex browser <command>`
 5. End with `reflex browser session-kill` in auto-session mode.
    - if you used an explicit session id, use `reflex browser session-kill --session <sessionId>` (or `reflex browser session-kill <sessionId>`)
 
-Agent defaults:
+Use the CLI itself as the command/protocol source of truth:
 
-- do not pass `--session` by habit after `start`; normal flows should stay in scoped auto-session mode
-- prefer `summary` with `-i`, `-C`, `-c`, `-d`, and `-s` for selector discovery and recovery before trying `eval` or `html`
-- use `reflex browser help --json` for exact command/response/schema details instead of duplicating those rules here
+- `reflex browser --help`
+- `reflex browser help --json`
+
+## Agent Defaults
+
+- Do not pass `--session` by habit after `start`; normal flows should stay in scoped auto-session mode.
+- Start on the target page, not on broad capability audits; do not inventory libraries or call repeated help commands unless a concrete next step needs exact syntax.
+- Prefer `summary` first and fine-tune it (`-i -c`, then `-s`, `-C`, `-d`) for selector discovery and recovery before trying `eval` or `html`; treat `html` as last-resort evidence, not normal recovery. Start with count 20; increase only when the page has many repeated items.
+- Use `reflex browser help --json` for exact command/response/schema details instead of duplicating those rules here.
+
+## Discovery Before Capability Audits (Required)
+
+1. For normal tasks, start with the target page: `start` -> `open` -> `summary`.
+2. Do not begin with broad audits such as `reflex lua libs`, repeated `help` calls, external doc hunts, or speculative output-format work.
+3. Check exact command/library help only when you have a concrete next step that requires it.
+4. Once a browser command succeeds, continue the task instead of re-checking availability.
 
 ## Agent Availability And Recovery (Required)
 
@@ -72,11 +88,12 @@ reflex agent runtime install
 ## Command Lifecycle (Required)
 
 1. Send actions as separate CLI invocations.
-2. Keep one logical session context for the task (auto-session by default).
-3. Default rule: omit `--session` on commands unless explicit override is required.
-4. Execute sequentially: run one command, inspect response, then run the next.
-5. On transport failure, recover the local agent first, then rerun the command as a new invocation.
-6. Cleanup with `reflex browser session-kill` when done unless the user explicitly asks to keep the session open.
+2. Do not chain browser commands with `&&`, long shell pipelines, or opaque wrappers.
+3. Keep one logical session context for the task (auto-session by default).
+4. Default rule: omit `--session` on commands unless explicit override is required.
+5. Execute sequentially: run one command, inspect response, then run the next.
+6. On transport failure, recover the local agent first, then rerun the command as a new invocation.
+7. Cleanup with `reflex browser session-kill` when done unless the user explicitly asks to keep the session open.
 
 ## Response Handling (Required)
 
@@ -106,6 +123,38 @@ reflex agent runtime install
    - targeted action (`click`/`text`/`attribute`/etc.)
    - re-run summary only after DOM-changing actions when needed
 
+## Summary Count And Flags (Required)
+
+The positional `count` argument controls how many **targets** (ranked actionable elements) and **snapshot lines** are returned. It does not control how much of the DOM is scanned — the agent always scans up to 2000 nodes regardless.
+
+- Default: **20**. Hard max: **100**.
+- Start with `summary 20 -i -c`. This is enough for most pages.
+- If you need more coverage, **refine with flags first** (`-s`, `-C`, `-d`), not by increasing the count.
+- Only increase the count when the page has many similar actionable items (e.g., a product listing with 50+ links) and you need targets for more of them.
+- Do not use high counts like `summary 80` as a general "show me everything" — it adds low-confidence targets and more snapshot noise without improving discovery quality.
+
+## Summary Refinement Ladder (Required)
+
+When the first `summary` pass is weak, noisy, or incomplete, stay in `summary` mode and refine it before escalating:
+
+1. Start with `summary 20 -i -c` for normal interactive discovery.
+2. If the results are too broad, add `-s "<container>"` to scope discovery to the relevant region.
+3. If the page relies on non-semantic clickable UI, add `-C`.
+4. If the output is still noisy, tune depth (`-d <n>`) and scope (`-s`) instead of increasing count or switching tools.
+5. Only increase count beyond 20 when you know the page has many repeated items and you need targets for more of them.
+6. Re-run `summary` after DOM-changing actions and continue from fresh refs/targets.
+7. Use `html` only after at least 2 materially different `summary` passes still fail to expose enough structure for a targeted `click`/`text`/`attribute`/`property` call.
+8. After consulting `html`, immediately switch back to targeted commands; do not keep planning from raw HTML dumps.
+
+## Overlay And Noise Recovery (Required)
+
+When `summary` only surfaces cookie/consent/chat widgets or other overlays:
+
+1. Treat that output as page-state information, not discovery failure.
+2. Dismiss or accept the blocking UI with the returned refs/selectors when safe and necessary.
+3. Re-run `summary` immediately after the overlay changes the DOM.
+4. Only escalate to `html` or other last-resort evidence after overlay cleanup plus the normal summary refinement ladder still fails.
+
 ## Summary Refs (Required)
 
 Each `summary` call assigns short-lived refs (`@r1`, `@r2`, …) to interactive elements:
@@ -132,14 +181,16 @@ Helper script:
 - `scripts/capture_json.sh` provides `rb_capture`, `rb_jq`, and `rb_pick_selector` for safe full-response handling.
 - source via `source skills/reflex-browser/scripts/capture_json.sh` (from project root).
 
-## Lua Output Handling
+## Lua Trace Generation
 
-1. Treat `lua` action output as a raw trace by default.
-2. If `response.data.generationGuidance` is present, apply it to produce a human-usable Lua 5.2 script.
-3. Keep discovered selectors as-is when guidance says selectors are fixed.
-4. Return both:
-   - raw generated script (for traceability)
-   - enhanced runnable script (for human use)
+The `reflex browser lua` command generates a Lua trace of the current browser session:
+
+1. Only call `reflex browser lua` after the browser flow is already stable and validated.
+2. Treat the output as a raw trace to refactor, not a finished script.
+3. If `response.data.generationGuidance` is present, apply it when producing the script.
+4. Keep discovered selectors as-is when guidance says selectors are fixed.
+5. Do not use `reflex browser lua` to rescue an unstable discovery session; the trace will mirror dead-end navigation.
+6. For the actual script authoring, switch to the `reflex-scripting` skill.
 
 ## Session Selection Rules
 
@@ -190,11 +241,22 @@ Helper script:
 4. Continuing extraction loops after a failed `open`.
 5. Using positional selectors on the wrong structural level (for example `article:nth-of-type(n)` when siblings are actually `li` elements).
 6. Repeating the same failing selector pattern across increasing indexes without re-discovery.
-7. Jumping to full `html` dumps before trying `summary` for selector recovery.
+7. Jumping to full `html` dumps after the first weak `summary` instead of fine-tuning `summary` scope/flags first.
 8. Starting extra sessions during the same task without explicit need and cleanup.
 9. Hiding browser flow in long shell scripts/loops instead of observable one-command-at-a-time CLI calls.
 10. Passing explicit `--session` by habit in single-flow tasks that should use default auto-session behavior.
 11. Using `--help` mid-task as a substitute for the documented selector/session workflow.
+12. Throwing away a validated browser flow in favor of direct HTTP or side-route fetching just because another layer exists.
+13. Starting with broad capability audits (`reflex lua libs`, repeated `help` calls, external doc hunts) before trying `start` -> `open` -> `summary` on the target page.
+14. Treating cookie/consent/chat-only summary output as permission to jump to `eval`, `html`, or external fetching instead of clearing the overlay and re-running `summary`.
+
+## Extending Beyond Browser
+
+When browser commands alone are not enough to complete the task:
+
+1. If the task just needs data export or file output after browser collection, use direct library commands (`reflex xlsx ...`, `reflex csv ...`) or `reflex lua exec "..."` — see the `reflex-scripting` skill.
+2. If the user asks for a reusable script, switch to the `reflex-scripting` skill after browser discovery is done. Carry forward all discovered selectors, refs, URLs, and page transitions.
+3. Do not discard a validated browser flow just because another layer also exists; scripts should continue the workflow, not replace it.
 
 ## Output Contract
 
@@ -260,5 +322,7 @@ function Open-Target {
   - `references/selectors.md`
 - Session lifecycle and recovery:
   - `references/session-management.md`
-- Worked example:
+- Worked examples:
   - `examples/books-to-scrape-summary.md`
+  - `examples/page-to-export-one-off.md`
+  - `examples/careers-to-xlsx-lua.md`

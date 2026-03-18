@@ -54,10 +54,13 @@ For action failures with stale DOM:
 1. re-check `url` and `title`
 2. verify expected page context before selector actions
 3. run `reflex browser summary`
+   - start with `-i -c` for normal discovery
+   - if summary only shows cookie/chat/consent widgets, clear them first and rerun summary
    - add `-s` to focus on the likely container
    - add `-C` when the UI is cursor-driven
+   - tune `-d` or summary count if the page is still noisy
 4. retry action with updated high-confidence selector hint
-5. request `html` only if hints remain weak after retries
+5. request `html` only if hints remain weak after at least 2 materially different summary refinement passes
 
 For auto-session engine mismatches:
 

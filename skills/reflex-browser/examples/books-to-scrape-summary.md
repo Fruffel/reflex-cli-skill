@@ -17,9 +17,10 @@ This is an AI-oriented workflow example, not a shell script to hide execution. R
 3. Use `summary` to discover category links — prefer `ref` over `selector` when present.
 4. Use refs directly for `click`, `attribute`, and other actions — no selector re-parsing needed.
 5. Re-run `summary` after each navigation to get fresh refs (stale refs return `ELEMENT_STALE`).
-6. If `summary` does not surface item-level selectors, derive them from `html` evidence instead of guessing.
-7. Open each book page and extract the product description with `text`.
-8. End with `reflex browser session-kill`.
+6. If the first `summary` only shows consent/chat widgets, clear them and rerun `summary` before deeper discovery.
+7. If `summary` does not surface item-level selectors on the first pass, fine-tune `summary` first (`-s`, `-C`, `-d`, count) and use `html` only as a last resort instead of guessing.
+8. Open each book page and extract the product description with `text`.
+9. End with `reflex browser session-kill`.
 
 ## Fiction Then Horror
 
@@ -92,30 +93,6 @@ reflex browser summary 20 -i -c
 Read the first four Horror titles and hrefs via their refs:
 
 ```bash
-reflex browser open "../../../soumission_998/index.html"
-reflex browser text "css=#product_description + p"
-
-reflex browser open "../../../private-paris-private-10_958/index.html"
-reflex browser text "css=#product_description + p"
-
-reflex browser open "../../../we-love-you-charlie-freeman_954/index.html"
-reflex browser text "css=#product_description + p"
-
-reflex browser open "../../../thirst_946/index.html"
-reflex browser text "css=#product_description + p"
-```
-
-Go back to the home page, discover Horror with `summary`, and repeat the same pattern:
-
-```bash
-reflex browser open https://books.toscrape.com/index.html
-reflex browser summary 20 -i -c
-reflex browser open "catalogue/category/books/horror_31/index.html"
-```
-
-Read the first four Horror titles and hrefs via their refs:
-
-```bash
 reflex browser attribute "@r338" title
 reflex browser attribute "@r338" href
 reflex browser attribute "@r339" title
@@ -162,4 +139,7 @@ reflex browser session-kill
 - Do not switch to explicit `--session` unless you intentionally need multiple concurrent sessions or a user-requested pinned id.
 - Do not reuse refs across navigations — they are invalidated after any DOM-mutating action or navigation.
 - Do not keep indexing new selectors after failures; rerun `summary` if page state changes or selectors go stale.
+- Do not treat consent/banner/chat-only summary output as failure; clear the overlay and rerun `summary`.
+- Do not jump to `html` after the first weak `summary`; fine-tune `summary` scope and flags first.
+- Do not abandon a validated browser flow just because chaining or scripting is available; those layers extend the same flow.
 - Do not prefer `eval` when `attribute`, `text`, `summary`, or `open` already cover the task.
