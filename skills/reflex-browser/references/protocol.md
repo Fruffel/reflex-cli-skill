@@ -80,6 +80,10 @@ Compaction rules:
 - `response.success` is omitted (use envelope `ok`)
 - duplicated `response.session` matching envelope `session` is omitted
 - duplicated `response.data` context fields that mirror envelope/response state are omitted (`action`, `session`, repeated page-state keys)
+- optional `summary` add-ons live beside `response.data`:
+  - `response.state` for lightweight page context (`tabs`, `scroll`, `viewport`, `page`)
+  - `response.artifacts.screenshot` for `{ mimeType, base64 }` when `--screenshot` is requested
+- existing parsers can ignore these optional add-ons safely
 
 Response-consumption rule:
 

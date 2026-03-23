@@ -101,7 +101,8 @@ reflex agent runtime install
 2. Do not pipe command output directly into filtering (`jq | head`) as the only observable output; this hides critical context.
 3. Prefer in-memory capture over temp files; if temp files are needed, use ephemeral files and clean them up.
 4. Treat envelope fields (`ok`, `action`, `session`) as source-of-truth; mirrored duplicates may be compacted out of `response`.
-5. For exact field names such as `summary.targets[]`, use `reflex browser help --json` as the contract reference.
+5. Treat `response.state` and `response.artifacts` as optional add-ons when explicitly requested; existing summary parsers can ignore them.
+6. For exact field names such as `summary.targets[]`, use `reflex browser help --json` as the contract reference.
 
 ## Parser-First Summary Contract (Required)
 
@@ -264,6 +265,7 @@ Use `reflex browser help --json` for the exact machine-readable response schema,
 
 - summary target fields such as `selector`, `ref`, `text`, and `href`
 - read-value paths such as `response.data.value`
+- optional summary add-ons such as `response.state` and `response.artifacts.screenshot`
 - error fields such as `response.errorCode` and `response.recoveryHint`
 - Lua generation and screenshot payload fields
 

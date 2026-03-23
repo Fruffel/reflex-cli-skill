@@ -54,22 +54,40 @@ Session behavior:
 
 Bootstrap flags (`start`, `open`):
 
+- `--chrome-connect <false|automatic|port>`
+- `--auto-connect`
 - `--width <px>`
 - `--height <px>`
 - `--headless <true|false>`
 - `--timeout <ms>`
 - `--open-wait <domcontentloaded|load|networkidle>`
 
+Chrome attach notes:
+
+- `chromeConnect: "automatic"` is intended for Playwright and attaches to an already-running Chromium browser over CDP
+- Selenium attach is supported only with an explicit debugging port, using a browser launched in the classic way with `--remote-debugging-port` and `--user-data-dir`
+- `chrome://inspect/#remote-debugging` works best with Playwright; do not rely on it for Selenium attach
+
 Examples:
 
 ```bash
 reflex browser start
+reflex browser start --engine playwright --auto-connect
+reflex browser start --engine selenium --chrome-connect 9333
 reflex browser start --session my-session
 reflex browser open https://example.com
 reflex browser fill "css=input[name='email']" "user@example.com"
 reflex browser wait "css=.dashboard" 8000
 reflex browser summary 25 -i -c
+reflex browser summary 25 -i -c --state
+reflex browser summary 25 -i -c --state --screenshot
 ```
+
+Summary add-on flags:
+
+- `reflex browser summary --state` adds optional page context at `response.state`
+- `reflex browser summary --screenshot` adds an optional screenshot artifact at `response.artifacts.screenshot`
+- both flags are opt-in; default summary output stays unchanged for existing parsers
 
 ## Script Commands
 
@@ -151,7 +169,8 @@ Example `config.json`:
 {
   "agentUrl": "http://localhost:7001",
   "agentKey": "dev",
-  "engine": "play",
+  "engine": "playwright",
+  "chromeConnect": false,
   "headless": true,
   "width": 1440,
   "height": 900,
@@ -169,6 +188,8 @@ Environment variables for browser commands:
 - `REFLEX_URL`
 - `REFLEX_KEY`
 - `REFLEX_ENGINE`
+- `REFLEX_CHROME_CONNECT`
+- `REFLEX_AUTO_CONNECT`
 - `REFLEX_PROFILE`
 - `REFLEX_HEADLESS`
 - `REFLEX_WIDTH`
@@ -176,6 +197,30 @@ Environment variables for browser commands:
 - `REFLEX_TIMEOUT`
 - `REFLEX_CLI_TIMEOUT`
 - `REFLEX_OPEN_WAIT`
+
+Recommended config examples:
+
+```json
+{
+  "engine": "playwright",
+  "chromeConnect": "automatic"
+}
+```
+
+```json
+{
+  "engine": "selenium",
+  "chromeConnect": 9333
+}
+```
+
+For Selenium attach, launch Chrome with a dedicated debugging port and custom profile dir, for example:
+
+```bash
+google-chrome-stable \
+  --remote-debugging-port=9333 \
+  --user-data-dir=/tmp/reflex-selenium-attach
+```
 
 Agent auth/download state:
 
@@ -198,6 +243,12 @@ Browser commands always print one JSON object with:
 - `message` on failure
 
 Use `response.data.value` for read-style commands and `response.data.summary.targets[]` for `summary` parsing.
+For `reflex browser summary`, parsers may also see optional add-ons:
+
+- `response.state` with lightweight page context such as `tabs`, `scroll`, `viewport`, and `page`
+- `response.artifacts.screenshot` with `{ mimeType, base64 }` when `--screenshot` is requested
+
+Existing consumers can ignore those optional fields safely.
 
 Script and generated library commands print NDJSON events instead of a single JSON envelope.
 
