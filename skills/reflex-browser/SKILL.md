@@ -1,6 +1,6 @@
 ---
 name: reflex-browser
-description: Use this skill for browser automation through Reflex Agent using the reflex CLI, including session handling, command flow, selectors, and protocol-safe request patterns.
+description: Use this skill for browser automation through Reflex Agent using the reflex CLI, including session handling, command flow, selectors, screenshot-assisted discovery, visual QA, and protocol-safe request patterns.
 ---
 
 # Reflex Browser Skill
@@ -18,6 +18,7 @@ When the end goal is a reusable Lua or Python browser automation script, **still
 - User asks to interact with a website (navigate, click, fill, read, scrape)
 - User asks to inspect or explore a page
 - User asks for browser-based data collection
+- User asks whether a page, modal, overlay, or layout looks correct
 - User asks for a browser automation script (start here for discovery, then `reflex-scripting` for the script)
 
 ## When NOT To Use This Skill
@@ -53,6 +54,7 @@ Use the CLI itself as the command/protocol source of truth:
 - Do not pass `--session` by habit after `start`; normal flows should stay in scoped auto-session mode.
 - Start on the target page, not on broad capability audits; do not inventory libraries or call repeated help commands unless a concrete next step needs exact syntax.
 - Prefer `summary` first and fine-tune it (`-i -c`, then `-s`, `-C`, `-d`) for selector discovery and recovery before trying `eval` or `html`; treat `html` as last-resort evidence, not normal recovery. Start with count 20; increase only when the page has many repeated items.
+- Use `summary --state --screenshot` when selector recovery or page review needs visual evidence; keep screenshots opt-in instead of adding them to every pass.
 - Use `reflex browser help --json` for exact command/response/schema details instead of duplicating those rules here.
 
 ## Discovery Before Capability Audits (Required)
@@ -102,7 +104,8 @@ reflex agent runtime install
 3. Prefer in-memory capture over temp files; if temp files are needed, use ephemeral files and clean them up.
 4. Treat envelope fields (`ok`, `action`, `session`) as source-of-truth; mirrored duplicates may be compacted out of `response`.
 5. Treat `response.state` and `response.artifacts` as optional add-ons when explicitly requested; existing summary parsers can ignore them.
-6. For exact field names such as `summary.targets[]`, use `reflex browser help --json` as the contract reference.
+6. When screenshots are requested, inspect them as visual evidence alongside `response.data.summary.targets[]`; do not replace the parser contract with screenshot-only reasoning when actionable selectors are needed.
+7. For exact field names such as `summary.targets[]`, use `reflex browser help --json` as the contract reference.
 
 ## Parser-First Summary Contract (Required)
 
@@ -146,6 +149,19 @@ When the first `summary` pass is weak, noisy, or incomplete, stay in `summary` m
 6. Re-run `summary` after DOM-changing actions and continue from fresh refs/targets.
 7. Use `html` only after at least 2 materially different `summary` passes still fail to expose enough structure for a targeted `click`/`text`/`attribute`/`property` call.
 8. After consulting `html`, immediately switch back to targeted commands; do not keep planning from raw HTML dumps.
+
+## Visual Evidence And Screenshots (Required)
+
+1. When the user asks for visual judgment such as "does this look good", "is this aligned", "is something covering it", or "what is visible here", capture screenshot evidence before answering.
+2. Use `reflex browser screenshot` for pure visual review when no selector discovery is needed.
+3. Use `reflex browser summary 20 -i -c --state --screenshot` when the task needs both selector recovery and visual confirmation.
+4. Prefer screenshot-assisted summary when the page is visually tricky:
+   - canvas-like or game-like UIs
+   - overlays, sticky headers, consent/chat widgets, or occlusion problems
+   - duplicated labels where DOM hints alone are ambiguous
+   - non-semantic click targets where visible placement matters
+5. Keep screenshots opt-in. If selectors are already clear from normal `summary`, do not add screenshot payloads on every pass.
+6. Use the screenshot to confirm which visible element matches a candidate ref/selector or to explain why something is off-screen or obscured; keep `summary.targets[]` as the action feed.
 
 ## Overlay And Noise Recovery (Required)
 

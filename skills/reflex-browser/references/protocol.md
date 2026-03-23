@@ -84,6 +84,7 @@ Compaction rules:
   - `response.state` for lightweight page context (`tabs`, `scroll`, `viewport`, `page`)
   - `response.artifacts.screenshot` for `{ mimeType, base64 }` when `--screenshot` is requested
 - existing parsers can ignore these optional add-ons safely
+- use `summary --state --screenshot` when visual evidence should travel with selector/context output; use `screenshot` when only a visual snapshot is needed
 
 Response-consumption rule:
 
@@ -106,3 +107,8 @@ For `screenshot`:
 - `response.data.imageBase64`: base64 PNG
 - `response.data.mimeType`: `image/png`
 - `response.data.byteSize`: byte length
+
+Typical usage split:
+
+- `summary --state --screenshot`: selector recovery plus page-context and visual evidence
+- `screenshot`: pure visual QA or "what does this look like?" inspection

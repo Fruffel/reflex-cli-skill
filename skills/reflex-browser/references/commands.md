@@ -11,6 +11,7 @@ Use this file only for workflow reminders:
 
 - default to omitted `--session`; scoped auto-session is the normal agent path
 - default to `summary` and fine-tune it (`-i -c`, then `-s`, `-C`, `-d`) for selector discovery and recovery; do not jump to `html` on the first weak pass. Start with count 20; increase only when the page has many repeated items
+- use `summary --state --screenshot` when selector discovery also needs visual evidence; use `screenshot` alone for pure "does this look right?" review
 - if `summary` only returns cookie/chat/consent widgets, clear them via refs/selectors and rerun `summary`
 - do not chain multiple browser commands with `&&`; inspect each JSON response before continuing
 - start with target page discovery before broad `lua libs` or repeated help audits
