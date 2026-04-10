@@ -193,6 +193,15 @@ reflex browser attribute "@r150" title   # read without re-discovering selector
 reflex browser attribute "@r150" href
 ```
 
+## Shadow DOM Support
+
+Shadow DOM is supported.
+
+- Use shadow-piercing selector chains with `>>>`.
+- Example: `css=app-shell >>> css=book-item >>> css=button.buy`
+- Keep each hop explicit; select the shadow host before `>>>`, then the element inside it.
+- Prefer `summary` refs when available, but if you must write a selector manually for a shadow-root element, use the full `>>>` chain instead of dropping to a flat CSS selector.
+
 Helper script:
 
 - `scripts/capture_json.sh` provides `rb_capture`, `rb_jq`, and `rb_pick_selector` for safe full-response handling.
@@ -247,6 +256,7 @@ A browser session may originate from a handed-off Lua or Python script run, not 
 7. For repeated-item extraction, anchor selectors at the collection parent (for example list/grid item), then index that parent; do not index unrelated descendants.
 8. Treat repeated `no such element` or timeout on the same intent as a selector-state mismatch, not a transient flake.
 9. When transport fails, recover via `reflex agent status` / `reflex agent start` before switching selector strategy.
+10. Do not strip shadow DOM chains from validated selectors; keep `>>>` hops intact when the target lives inside shadow roots.
 
 ## Wait Strategy (Required)
 

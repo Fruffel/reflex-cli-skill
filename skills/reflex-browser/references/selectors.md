@@ -76,6 +76,16 @@ When the first `summary` pass is weak, keep the same tool and change one thing a
 4. XPath only when CSS is not expressive enough
 5. Deep positional selectors (`nth-child`) as last resort
 
+## Shadow DOM
+
+Shadow DOM selectors are supported with `>>>` chains.
+
+- Format: `css=<shadow-host> >>> css=<inner-target>`
+- Nested example: `css=app-shell >>> css=app-page >>> css=button.save`
+- Mixed example: `css=book-app >>> xpath=.//h2[.='Boxer en Brandon']`
+- Keep the validated chain as-is. Do not flatten it into one CSS selector.
+- Prefer `summary` refs when present; use manual `>>>` selectors when you need a durable selector string for later actions or scripts.
+
 ## Stabilization Tactics
 
 - Add container context when there are duplicate elements.

@@ -126,8 +126,9 @@ Check library help once when you need exact method signatures. Do not run broad 
 3. Keep non-browser library usage stateless inside one script execution.
 4. Pass native Lua/Python data structures in scripts; pass JSON only for direct CLI commands.
 5. Reuse selectors, refs, URLs, and page assumptions discovered in browser CLI exactly, including prefixes such as `css=` and `xpath=`.
-6. Check output library constraints once up front; do not wander into alternate stacks just because a library has a constraint.
-7. If the user asks to create a file such as Excel output but does not ask for a script, prefer the direct command or `reflex lua exec ...` first.
+6. Shadow DOM selectors are supported; if browser discovery validated a `>>>` chain, keep that chain intact in the script.
+7. Check output library constraints once up front; do not wander into alternate stacks just because a library has a constraint.
+8. If the user asks to create a file such as Excel output but does not ask for a script, prefer the direct command or `reflex lua exec ...` first.
 
 ## Browser-Backed Script Rules
 
@@ -135,9 +136,10 @@ When a script automates a browser flow discovered via the `reflex-browser` skill
 
 1. The script continues a known browser flow — it is not a new discovery phase.
 2. Use the exact selectors and URLs validated during browser discovery; do not strip prefixes like `css=`.
-3. Prefer targeted browser reads/actions over `browser.source()` or whole-page regex parsing.
-4. Use `reflex browser lua` only after the browser flow is already stable; treat its output as a trace to refactor, not the final script.
-5. Do not restart with broad research once the browser flow is already validated.
+3. If the validated selector crosses shadow roots, keep the full `>>>` chain exactly as discovered.
+4. Prefer targeted browser reads/actions over `browser.source()` or whole-page regex parsing.
+5. Use `reflex browser lua` only after the browser flow is already stable; treat its output as a trace to refactor, not the final script.
+6. Do not restart with broad research once the browser flow is already validated.
 
 ## Script Failure Handoff
 
