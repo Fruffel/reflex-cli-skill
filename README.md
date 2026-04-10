@@ -100,6 +100,8 @@ reflex python exec "print(Rest.get('https://httpbin.org/get')['status'])"
 
 The script endpoints stream NDJSON events such as `start`, `stdout`, `result`, `error`, and `end`.
 
+`reflex lua run` and `reflex python run` execute saved scripts in the directory where you launched the CLI. When the script file lives under that same directory, Reflex preserves its relative path so existing sibling files, imports, and AI-driven fix loops stay aligned with the real script on disk.
+
 For browser automation scripts, first use `reflex browser ...` to inspect the page, session behavior, and selectors. Then turn that knowledge into Lua or Python script code.
 
 ## Generated Library Commands
@@ -246,7 +248,7 @@ Use `response.data.value` for read-style commands and `response.data.summary.tar
 For `reflex browser summary`, parsers may also see optional add-ons:
 
 - `response.state` with lightweight page context such as `tabs`, `scroll`, `viewport`, and `page`
-- `response.artifacts.screenshot` with `{ mimeType, base64 }` when `--screenshot` is requested
+- `response.artifacts.screenshot` with `{ mimeType, base64, byteSize }` when `--screenshot` is requested
 
 Existing consumers can ignore those optional fields safely.
 

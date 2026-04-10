@@ -82,7 +82,7 @@ Compaction rules:
 - duplicated `response.data` context fields that mirror envelope/response state are omitted (`action`, `session`, repeated page-state keys)
 - optional `summary` add-ons live beside `response.data`:
   - `response.state` for lightweight page context (`tabs`, `scroll`, `viewport`, `page`)
-  - `response.artifacts.screenshot` for `{ mimeType, base64 }` when `--screenshot` is requested
+  - `response.artifacts.screenshot` for `{ mimeType, base64, byteSize }` when `--screenshot` is requested
 - existing parsers can ignore these optional add-ons safely
 - use `summary --state --screenshot` when visual evidence should travel with selector/context output; use `screenshot` when only a visual snapshot is needed
 
@@ -104,9 +104,9 @@ Read command value contract:
 
 For `screenshot`:
 
-- `response.data.imageBase64`: base64 PNG
-- `response.data.mimeType`: `image/png`
-- `response.data.byteSize`: byte length
+- `response.artifacts.screenshot.mimeType`: `image/png`
+- `response.artifacts.screenshot.base64`: base64 PNG
+- `response.artifacts.screenshot.byteSize`: byte length
 
 Typical usage split:
 

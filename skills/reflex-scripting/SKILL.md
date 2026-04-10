@@ -99,6 +99,8 @@ reflex lua run scripts/export-data.lua
 
 Only create a saved script file when the user explicitly asks for a reusable script or the task clearly benefits from reuse.
 
+When running an existing saved script, invoke `reflex lua run ...` or `reflex python run ...` from the script's project root when possible. Reflex uses the shell's current working directory as the script workspace, and scripts inside that tree keep their real relative path so imports, sibling files, and repair iterations stay in sync.
+
 ## Library Discovery
 
 Find available libraries and their methods:
